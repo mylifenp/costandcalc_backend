@@ -1,5 +1,31 @@
 services:
-  admin_subgraph:
+  compose-config:
+    image: node:24
+    working_dir: /work
+    volumes:
+      - router-data:/config
+      - ./graph.yml:/work/graph.yml:ro
+    command: >
+      sh -c "
+        npm install -g wgc &&
+        wgc router compose -i /work/graph.yml -o /config/router.json
+      "
+
+  router:
+    image: ghcr.io/wundergraph/cosmo/router:0.337.0
+    command:
+      - run
+      - --config
+      - /config/config.yml
+
+    volumes:
+      - ./config.yml:/config/config.yml:ro
+      - router-data:/config
+    depends_on:
+      compose-config:
+        condition: service_completed_successfully
+
+  subgraphs_admin:
     image: mylifenp/subgraphs_admin:latest
     container_name: subgraphs_admin
     ports:

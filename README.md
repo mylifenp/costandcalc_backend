@@ -107,3 +107,9 @@ Join the Nx community:
 - [LinkedIn](https://www.linkedin.com/company/nrwl)
 - [YouTube](https://www.youtube.com/@nxdevtools)
 - [Blog](https://nx.dev/blog)
+
+
+
+# working for router
+export EXECUTION_CONFIG_FILE_PATH=$(pwd)/router.json
+./router run --config config.yml
