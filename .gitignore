@@ -48,3 +48,7 @@ Thumbs.db
 .nx/polygraph
 .nx/self-healing
 .nx/migrate-runs
+
+docker/start-required-containers.sh
+docker/.docker
+docker/.env
