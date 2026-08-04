@@ -2,7 +2,7 @@ version: "1"
 
 dev_mode: true
 log_level: "debug"
-listen_addr: "localhost:8000"
+listen_addr: "0.0.0.0:8000"
 playground_path: "/graphql"
 introspection_enabled: true
 json_log: true
