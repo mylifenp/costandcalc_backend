@@ -52,3 +52,5 @@ Thumbs.db
 docker/start-required-containers.sh
 docker/.docker
 docker/.env
+
+router/
