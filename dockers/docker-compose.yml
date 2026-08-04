@@ -4,11 +4,11 @@ services:
     working_dir: /work
     volumes:
       - router-data:/config
-      - ./graph.yml:/work/graph.yml:ro
+      - ./graph.production.yml:/work/graph.production.yml:ro
     command: >
       sh -c "
         npm install -g wgc &&
-        wgc router compose -i /work/graph.yml -o /config/router.json
+        wgc router compose -i /work/graph.production.yml -o /config/router.json
       "
 
   router:
@@ -35,6 +35,17 @@ services:
     ports:
       - '8001:8001'
     restart: always
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:8001/graphql"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     depends_on:
       mongodb:
         condition: service_started

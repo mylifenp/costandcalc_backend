@@ -1,0 +1,6 @@
+version: "1"
+subgraphs:
+  - name: admin
+    routing_url: http://subgraphs_admin:8001/graphql
+    introspection:
+      url: http://subgraphs_admin:8001/graphql
