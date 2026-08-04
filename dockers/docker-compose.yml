@@ -3,7 +3,7 @@ services:
     image: mylifenp/subgraphs_admin:latest
     container_name: subgraphs_admin
     ports:
-      - '9093:9093'
+      - '8001:8001'
     restart: always
     depends_on:
       mongodb:
