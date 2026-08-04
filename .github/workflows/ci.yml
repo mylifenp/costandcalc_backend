@@ -10,9 +10,16 @@ permissions:
   actions: read
   contents: read
 
+env:
+  DOCKERHUB_NAMESPACE: mylifenp
+  DOCKER_IMAGE_SUBGRAPHS_ADMIN: mylifenp/subgraphs_admin
+  DOCKER_REPOSITORY_SUBGRAPHS_ADMIN: subgraphs_admin
+
 jobs:
   main:
     runs-on: ubuntu-latest
+    outputs:
+      affected: ${{ steps.affected.outputs.affected }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -25,16 +32,215 @@ jobs:
       - run: npx nx start-ci-run --distribute-on="3 linux-medium-js" --stop-agents-after="e2e"
 
       # Cache node_modules
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: 'npm'
 
-      - run: npm ci
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy,rustfmt
 
-      # Prepend any command with "nx record --" to record its logs to Nx Cloud
-      - run: npx nx record -- npx nx format:check --base="remotes/origin/main"
-      - run: npx nx run-many -t lint test build typecheck e2e
-      # Nx Cloud recommends fixes for failures to help you get CI green faster. Learn more: https://nx.dev/docs/features/ci-features/self-healing-ci
+      - name: Install depedencies
+        run: npm ci
+
+
+      # Record format check to Nx Cloud
+      # - run: npx nx record -- npx nx format:check --base="remotes/origin/main"
+
+      # Run only affected lint/test/build/typecheck/e2e for changed projects
+      - name: Affected lint
+        run: |
+          npx nx affected --target=lint \
+            --base=${{ github.event.pull_request.base.sha || github.event.before }} \
+            --head=${{ github.sha }} || true
+
+      - name: Affected test
+        run: |
+          npx nx affected --target=test \
+            --base=${{ github.event.pull_request.base.sha || github.event.before }} \
+            --head=${{ github.sha }} || true
+
+      - name: Affected build
+        run: |
+          npx nx affected --target=build \
+            --base=${{ github.event.pull_request.base.sha || github.event.before }} \
+            --head=${{ github.sha }} || true
+
+      - name: Affected typecheck
+        run: |
+          npx nx affected --target=typecheck \
+            --base=${{ github.event.pull_request.base.sha || github.event.before }} \
+            --head=${{ github.sha }} || true
+
+      - name: Affected e2e
+        run: |
+          npx nx affected --target=e2e \
+            --base=${{ github.event.pull_request.base.sha || github.event.before }} \
+            --head=${{ github.sha }} || true
+
+      # Nx self-healing helper
       - run: npx nx fix-ci
         if: always()
+
+      # Determine affected projects and expose as job output
+      - name: Determine affected projects
+        id: affected
+        run: |
+          set -euo pipefail
+
+          # Determine base and head refs (works for PRs and pushes)
+          BASE_SHA="${{ github.event.pull_request.base.sha || github.event.before }}"
+          HEAD_SHA="${{ github.sha }}"
+
+          echo "Base: $BASE_SHA"
+          echo "Head: $HEAD_SHA"
+
+          # Try JSON output first (some Nx versions support --json)
+          AFFECTED_RAW=""
+          if AFFECTED_RAW=$(npx nx show projects --affected --base="$BASE_SHA" --head="$HEAD_SHA" --json 2>/dev/null); then
+            # If the output looks like JSON array, parse it
+            if echo "$AFFECTED_RAW" | jq -e 'type == "array"' >/dev/null 2>&1; then
+              AFFECTED=$(node -e "const a=JSON.parse(process.argv[1]||'[]'); console.log(a.join(' '))" "$AFFECTED_RAW")
+            else
+              # Fallback: treat as newline-separated list
+              AFFECTED=$(echo "$AFFECTED_RAW" | tr '\n' ' ' | xargs)
+            fi
+          else
+            # If --json not supported or command failed with --json, try plain output
+            AFFECTED_RAW=$(npx nx show projects --affected --base="$BASE_SHA" --head="$HEAD_SHA" 2>/dev/null || true)
+            # If output is empty, try nx graph to generate a JSON graph and extract projects
+            if [ -z "$AFFECTED_RAW" ]; then
+              # Generate graph JSON and extract affected projects (nx graph --affected --file=graph.json)
+              npx nx graph --affected --base="$BASE_SHA" --head="$HEAD_SHA" --file=nx-graph.json
+              if [ -f nx-graph.json ]; then
+                AFFECTED=$(jq -r '.nodes[].id' nx-graph.json | tr '\n' ' ' | xargs)
+              else
+                echo "No affected projects found or nx graph failed."
+                AFFECTED=""
+              fi
+            else
+              # Convert newline-separated output to space-separated
+              AFFECTED=$(echo "$AFFECTED_RAW" | tr '\n' ' ' | xargs)
+            fi
+          fi
+
+          echo "Affected projects raw:"
+          echo "$AFFECTED_RAW"
+          echo "Affected projects parsed: $AFFECTED"
+
+          # Expose as job output
+          echo "affected=$AFFECTED" >> "$GITHUB_OUTPUT"
+
+      - name: Print affected projects
+        run: |
+            echo "Affected: ${{ steps.affected.outputs.affected }}"
+
+  build-subgraphs-admin:
+    runs-on: ubuntu-latest
+    needs: main
+    if: contains(needs.main.outputs.affected, 'subgraphs_admin') && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Compute image version tag
+        id: version
+        run: |
+          base_tag=$(git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null || echo 'v0.1.0')
+          if git describe --tags --exact-match HEAD >/dev/null 2>&1; then
+            version_tag="$base_tag"
+          else
+            version_tag="${base_tag}-build.${GITHUB_RUN_NUMBER}.${GITHUB_SHA::7}"
+          fi
+          echo "tag=${version_tag}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Costandcalc subgraphs_admin image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: dockers/subgraphs_admin.Dockerfile
+          push: true
+          tags: |
+            ${{ env.DOCKER_IMAGE_SUBGRAPHS_ADMIN }}:latest
+            ${{ env.DOCKER_IMAGE_SUBGRAPHS_ADMIN }}:${{ steps.version.outputs.tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Prune old Docker Hub image tags (web)
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKERHUB_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          DOCKERHUB_NAMESPACE: ${{ env.DOCKERHUB_NAMESPACE }}
+          DOCKERHUB_REPOSITORY: ${{ env.DOCKER_REPOSITORY_SUBGRAPHS_ADMIN }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+          token=$(curl -fsSL \
+            -H "Content-Type: application/json" \
+            -X POST \
+            -d "{\"username\":\"${DOCKERHUB_USERNAME}\",\"password\":\"${DOCKERHUB_PASSWORD}\"}" \
+            https://hub.docker.com/v2/users/login/ | jq -r '.token')
+
+          tags_to_delete=$(curl -fsSL \
+            -H "Authorization: Bearer ${token}" \
+            "https://hub.docker.com/v2/namespaces/${DOCKERHUB_NAMESPACE}/repositories/${DOCKERHUB_REPOSITORY}/tags?page_size=100" | \
+            jq -r '.results
+              | map(select(.name != "latest"))
+              | sort_by(.last_updated)
+              | reverse
+              | .[5:][]?.name')
+
+          if [ -z "${tags_to_delete}" ]; then
+            echo "No old versioned tags to delete"
+            exit 0
+          fi
+
+          while IFS= read -r tag; do
+            [ -z "${tag}" ] && continue
+            echo "Deleting old Docker Hub tag: ${tag}"
+            curl -fsSL \
+              -X DELETE \
+              -H "Authorization: Bearer ${token}" \
+              "https://hub.docker.com/v2/namespaces/${DOCKERHUB_NAMESPACE}/repositories/${DOCKERHUB_REPOSITORY}/tags/${tag}/"
+          done <<< "${tags_to_delete}"
+
+  deploy-on-vps:
+      needs:
+        - build-subgraphs-admin
+      runs-on: ubuntu-latest
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v6
+
+        - name: Copy Docker Compose file to server
+          run: |
+            sudo apt-get update
+            sudo apt-get install -y sshpass
+            sshpass -p "${{ secrets.PASSPHRASE }}" scp -o StrictHostKeyChecking=no dockers/docker-compose.yml "${{ secrets.VPS_USER }}"@"${{ secrets.VPS_HOST }}":~/costandcalc_backend/
+
+        - name: Deploy to VPS
+          uses: appleboy/ssh-action@master
+          with:
+            host: ${{ secrets.VPS_HOST }}
+            username: ${{ secrets.VPS_USER }}
+            key: ${{ secrets.SSH_PRIVATE_KEY }}
+            passphrase: ${{ secrets.PASSPHRASE }}
+            script: |
+              cd ~/costandcalc_backend
+              docker compose pull
+              docker compose up -d

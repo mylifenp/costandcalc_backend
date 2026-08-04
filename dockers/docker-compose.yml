@@ -1,0 +1,100 @@
+services:
+  admin_subgraph:
+    image: mylifenp/costandcalc_admin_subgraph:latest
+    container_name: costandcalc_admin_subgraph
+    ports:
+      - '9093:9093'
+    restart: always
+    depends_on:
+      mongodb:
+        condition: service_started
+      redis:
+        condition: service_started
+      redis-ps:
+        condition: service_started
+      minio:
+        condition: service_started
+    env_file:
+      - ./.env
+
+  mongodb:
+    image: 'mongo:latest'
+    restart: 'always'
+    container_name: 'costandcalc_mongodb'
+    env_file:
+      - ./.docker/database/.env
+    volumes:
+      - ./.docker/database/mongod.conf:/etc/mongod.conf
+      - ./.docker/database/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - ./.docker/database/data/db:/data/db/
+      - ./.docker/database/data/log/:/var/log/database/
+    ports:
+      - '27017:27017'
+
+  redis:
+    image: 'redis/redis-stack:latest'
+    container_name: 'costandcalc_redis'
+    restart: 'always'
+    ports:
+      - '6379:6379'
+    volumes:
+      - ./.docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./.docker/redis/redis-data:/data
+    env_file:
+      - ./.docker/redis/.env
+    # command:
+    #   - redis-server
+    #   - /usr/local/etc/redis/redis.conf
+
+  redis-ps:
+    image: 'redis:latest'
+    container_name: 'costandcalc_redis_ps'
+    restart: 'always'
+    ports:
+      - '6378:6379'
+    volumes:
+      - ./.docker/redis/redis-ps.conf:/usr/local/etc/redis/redis.conf
+      - ./.docker/redis/redis-ps-data:/data
+    env_file:
+      - ./.docker/redis/.env
+    command:
+      - redis-server
+      - /usr/local/etc/redis/redis.conf
+
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: 'minio'
+    restart: 'always'
+    ports:
+      - '9010:9000'
+      - '9020:9001'
+    volumes:
+      - ./.docker/minio/minio-data:/data
+    env_file:
+      - ./.docker/minio/.env
+    command: ['server', '--console-address', ':9001', '/data']
+
+  minio-buckets:
+    image: quay.io/minio/mc:latest
+    depends_on:
+      - minio
+    restart: on-failure
+    env_file:
+      - ./.docker/minio/.env
+    entrypoint: >
+      /bin/sh -c "
+      until /usr/bin/mc alias set dockerminio http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD}; do sleep 1; done;
+      /usr/bin/mc mb --ignore-existing dockerminio/$${MINIO_DEFAULT_BUCKETS};
+      exit 0;
+      "
+
+volumes:
+  mongodb:
+    driver: local
+  redis-data:
+    driver: local
+  minio-data:
+    driver: local
+
+networks:
+  default:

@@ -9,7 +9,9 @@
     {
       "plugin": "@nx/js/typescript",
       "options": {
-        "typecheck": { "targetName": "typecheck" },
+        "typecheck": {
+          "targetName": "typecheck"
+        },
         "build": {
           "targetName": "build",
           "configName": "tsconfig.lib.json",
@@ -17,7 +19,8 @@
           "watchDepsName": "watch-deps"
         }
       }
-    }
+    },
+    "@monodon/rust"
   ],
   "nxCloudId": "6a71e17dbb91bb09533eafb2",
   "analytics": false
