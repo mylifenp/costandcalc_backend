@@ -238,6 +238,8 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y sshpass
             sshpass -p "${{ secrets.PASSPHRASE }}" scp -o StrictHostKeyChecking=no dockers/docker-compose.yml "${{ secrets.VPS_USER }}"@"${{ secrets.VPS_HOST }}":~/costandcalc_backend/
+            sshpass -p "${{ secrets.PASSPHRASE }}" scp -o StrictHostKeyChecking=no router-config.yml "${{ secrets.VPS_USER }}"@"${{ secrets.VPS_HOST }}":~/costandcalc_backend/
+            sshpass -p "${{ secrets.PASSPHRASE }}" scp -o StrictHostKeyChecking=no graph.yml "${{ secrets.VPS_USER }}"@"${{ secrets.VPS_HOST }}":~/costandcalc_backend/
 
         - name: Deploy to VPS
           uses: appleboy/ssh-action@master
