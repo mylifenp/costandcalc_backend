@@ -1,0 +1,24 @@
+
+[workspace]
+resolver = '2'
+members = [
+	'packages/libs',
+	'packages/shared',
+	'packages/subgraphs/identity',
+	'packages/subgraphs/assets',
+	'packages/subgraphs/estimation',
+	'packages/subgraphs/work',
+	'packages/subgraphs/billing',
+	'packages/subgraphs/media',
+	'packages/subgraphs/notification',
+	'packages/subgraphs/admin',
+	'packages/shared/graphql',
+	'packages/shared/auth',
+]
+
+[workspace.dependencies]
+libs = { path = 'packages/libs' }
+shared = { path = 'packages/shared' }
+
+[profile.release]
+lto = true

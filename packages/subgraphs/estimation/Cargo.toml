@@ -1,0 +1,28 @@
+[package]
+name = "subgraphs_estimation"
+version = "0.1.0"
+edition = "2024"
+
+
+[dependencies]
+dotenvy = "0.15.7"
+async-graphql-axum = "7"
+chrono = { version = "0.4", features = ["serde"] }
+tower-http = {version="0.7", features = ["cors"]}
+serde = "1"
+futures = "0.3"
+slab = "0.4"
+async-trait = "0.1"
+shared = { workspace = true }
+
+[dependencies.axum]
+version = "0.8"
+
+[dependencies.async-graphql]
+version = "7"
+
+[dependencies.tokio]
+version = "1"
+features = ["full"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
