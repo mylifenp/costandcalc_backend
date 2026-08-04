@@ -54,3 +54,6 @@ docker/.docker
 docker/.env
 
 router/
+
+.env
+.env.local
