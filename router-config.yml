@@ -2,7 +2,7 @@ version: "1"
 
 dev_mode: true
 log_level: "debug"
-listen_addr: "0.0.0.0:8000"
+listen_addr: "0.0.0.0:8099"
 playground_path: "/graphql"
 introspection_enabled: true
 json_log: true
@@ -25,12 +25,11 @@ headers:
         named: Access-Token
       - op: "propagate"
         named: ID-Token
-
 execution_config:
   file:
-    # Path to the previous generated file
-    path: "/config/router.json" # or EXECUTION_CONFIG_FILE_PATH
-    watch: true # EXECUTION_CONFIG_FILE_WATCH
+  # Path to the previous generated file
+    path: "/data/router.json" # or EXECUTION_CONFIG_FILE_PATH
+    watch: false # EXECUTION_CONFIG_FILE_WATCH
 
 websocket:
   enabled: true

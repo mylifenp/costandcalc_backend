@@ -1,34 +1,31 @@
 services:
   compose-config:
-    image: node:24
-    working_dir: /work
+    image: node:24-alpine
+
     volumes:
-      - router-data:/config
+      - router-data:/data
       - ./graph.production.yml:/work/graph.production.yml:ro
     command: >
       sh -c "
-        npm install -g wgc &&
-        wgc router compose -i /work/graph.production.yml -o /config/router.json
+        npm install -g wgc@latest &&
+        wgc router compose -i /work/graph.production.yml -o /data/router.json
       "
 
   router:
-    image: ghcr.io/wundergraph/cosmo/router:0.337.0
-
+    container_name: cosmo-router
+    image: ghcr.io/wundergraph/cosmo/router:latest
     depends_on:
       compose-config:
         condition: service_completed_successfully
-
-    command:
-      - run
-      - --config
-      - /config/config.yml
+    environment:
+      CONFIG_PATH: /etc/router/router-config.yml
     ports:
-      - '8000:8000'
+      - '8099:8099'
 
     volumes:
-      - ./config.yml:/config/config.yml:ro
-      - router-data:/config
-    
+      - ./router-config.yml:/etc/router/router-config.yml:ro
+      - router-data:/data
+
   subgraphs_admin:
     image: mylifenp/subgraphs_admin:latest
     container_name: subgraphs_admin
