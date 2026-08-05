@@ -824,6 +824,13 @@ jobs:
         github.ref == 'refs/heads/main' &&
         needs.main.result == 'success' &&
         (needs.build-subgraphs-admin.result == 'success' || needs.build-subgraphs-admin.result == 'skipped')
+        (needs.build-subgraphs-assets.result == 'success' || needs.build-subgraphs-admin.result == 'skipped')
+        (needs.build-subgraphs-billing.result == 'success' || needs.build-subgraphs-admin.result == 'skipped')
+        (needs.build-subgraphs-estimate.result == 'success' || needs.build-subgraphs-admin.result == 'skipped')
+        (needs.build-subgraphs-identity.result == 'success' || needs.build-subgraphs-admin.result == 'skipped')
+        (needs.build-subgraphs-media.result == 'success' || needs.build-subgraphs-media.result == 'skipped')
+        (needs.build-subgraphs-notification.result == 'success' || needs.build-subgraphs-notification.result == 'skipped')
+        (needs.build-subgraphs-work.result == 'success' || needs.build-subgraphs-work.result == 'skipped')
       steps:
         - name: Checkout code
           uses: actions/checkout@v6

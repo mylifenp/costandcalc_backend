@@ -7,7 +7,7 @@ subgraphs:
   - name: assets
     routing_url: http://subgraphs_assets:8002/graphql
     introspection:
-      url: http://subgraphs_admin:8002/graphql
+      url: http://subgraphs_assets:8002/graphql
   - name: billing
     routing_url: http://subgraphs_billing:8003/graphql
     introspection:
