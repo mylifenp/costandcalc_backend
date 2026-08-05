@@ -29,7 +29,7 @@ execution_config:
   file:
   # Path to the previous generated file
     path: "/data/router.json" # or EXECUTION_CONFIG_FILE_PATH
-    watch: false # EXECUTION_CONFIG_FILE_WATCH
+    watch: true # EXECUTION_CONFIG_FILE_WATCH
 
 websocket:
   enabled: true

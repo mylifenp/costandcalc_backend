@@ -1,6 +1,34 @@
 version: "1"
 subgraphs:
   - name: admin
-    routing_url: http://localhost:8001/graphql
+    routing_url: http://0.0.0.0:8001/graphql
     introspection:
-      url: http://localhost:8001/graphql
+      url: http://0.0.0.0:8001/graphql
+  - name: assets
+    routing_url: http://0.0.0.0:8002/graphql
+    introspection:
+      url: http://0.0.0.0:8002/graphql
+  - name: billing
+    routing_url: http://0.0.0.0:8003/graphql
+    introspection:
+      url: http://0.0.0.0:8003/graphql
+  - name: estimation
+    routing_url: http://0.0.0.0:8004/graphql
+    introspection:
+      url: http://0.0.0.0:8004/graphql
+  - name: identity
+    routing_url: http://0.0.0.0:8005/graphql
+    introspection:
+      url: http://0.0.0.0:8005/graphql
+  - name: media
+    routing_url: http://0.0.0.0:8006/graphql
+    introspection:
+      url: http://0.0.0.0:8006/graphql
+  - name: notification
+    routing_url: http://0.0.0.0:8007/graphql
+    introspection:
+      url: http://0.0.0.0:8007/graphql
+  - name: work
+    routing_url: http://0.0.0.0:8008/graphql
+    introspection:
+      url: http://0.0.0.0:8008/graphql

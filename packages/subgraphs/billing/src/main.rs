@@ -1,6 +1,6 @@
-mod utils;
 mod graphql;
 mod repositories;
+mod utils;
 use std::env;
 
 use axum::{Router, routing::get, serve};
@@ -8,18 +8,18 @@ use axum::{Router, routing::get, serve};
 use dotenvy::dotenv;
 use shared::graphiql_handler;
 use tokio::net::TcpListener;
-use tower_http::{
-    cors::{self, CorsLayer},
+use tower_http::cors::{self, CorsLayer};
+
+use crate::{
+    graphql::schema::schema::{AppSchema, build_schema},
+    utils::{graphql_handler, graphql_ws_handler},
 };
-
-use crate::{graphql::schema::schema::{AppSchema, build_schema}, utils::{graphql_handler, graphql_ws_handler}};
-
 
 #[tokio::main]
 async fn main() {
     #[cfg(debug_assertions)]
     dotenv().ok();
-
+    // host should always be 0.0.0.0 for docker
     let host = env::var("ADMIN_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
     let port = env::var("BILLING_PORT").unwrap_or_else(|_| "8003".to_string());
 
@@ -37,7 +37,7 @@ async fn main() {
         .with_state(schema.clone());
 
     println!("Billing playground: http://{host}:{port}/graphql");
-    
+
     let listener = TcpListener::bind(format!("{host}:{port}")).await.unwrap();
     serve(listener, app).await.unwrap();
 }

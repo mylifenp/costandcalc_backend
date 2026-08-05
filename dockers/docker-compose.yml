@@ -55,6 +55,35 @@ services:
     env_file:
       - ./.env
 
+  subgraphs_assets:
+    image: mylifenp/subgraphs_assets:latest
+    container_name: subgraphs_assets
+    ports:
+      - '8002:8001'
+    restart: always
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:8002/graphql"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      mongodb:
+        condition: service_started
+      redis:
+        condition: service_started
+      redis-ps:
+        condition: service_started
+      minio:
+        condition: service_started
+    env_file:
+      - ./.env
+
   mongodb:
     image: 'mongo:latest'
     restart: 'always'

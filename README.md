@@ -113,3 +113,9 @@ Join the Nx community:
 # working for router
 export EXECUTION_CONFIG_FILE_PATH=$(pwd)/router.json
 ./router run --config config.yml
+
+
+# running the project
+`nx run-many --target=run --all --parallel=8`
+
+to start cosmo-router in the root directory, run ./router/wgc.sh
