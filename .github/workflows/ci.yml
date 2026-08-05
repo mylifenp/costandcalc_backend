@@ -843,7 +843,7 @@ jobs:
       - build-subgraphs-admin
       - build-subgraphs-assets
       - build-subgraphs-billing
-      - build-subgraphs-estimate
+      - build-subgraphs-estimation
       - build-subgraphs-identity
       - build-subgraphs-media
       - build-subgraphs-notification
