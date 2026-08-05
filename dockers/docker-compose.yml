@@ -84,6 +84,180 @@ services:
     env_file:
       - ./.env
 
+  subgraphs_billing:
+    image: mylifenp/subgraphs_billing:latest
+    container_name: subgraphs_billing
+    ports:
+      - '8003:8001'
+    restart: always
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:8003/graphql"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      mongodb:
+        condition: service_started
+      redis:
+        condition: service_started
+      redis-ps:
+        condition: service_started
+      minio:
+        condition: service_started
+    env_file:
+      - ./.env
+
+  subgraphs_estimation:
+    image: mylifenp/subgraphs_estimation:latest
+    container_name: subgraphs_estimation
+    ports:
+      - '8004:8001'
+    restart: always
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:8004/graphql"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      mongodb:
+        condition: service_started
+      redis:
+        condition: service_started
+      redis-ps:
+        condition: service_started
+      minio:
+        condition: service_started
+    env_file:
+      - ./.env
+
+  subgraphs_identity:
+    image: mylifenp/subgraphs_identity:latest
+    container_name: subgraphs_identity
+    ports:
+      - '8005:8001'
+    restart: always
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:8005/graphql"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      mongodb:
+        condition: service_started
+      redis:
+        condition: service_started
+      redis-ps:
+        condition: service_started
+      minio:
+        condition: service_started
+    env_file:
+      - ./.env
+
+  subgraphs_media:
+    image: mylifenp/subgraphs_media:latest
+    container_name: subgraphs_media
+    ports:
+      - '8006:8001'
+    restart: always
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:8006/graphql"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      mongodb:
+        condition: service_started
+      redis:
+        condition: service_started
+      redis-ps:
+        condition: service_started
+      minio:
+        condition: service_started
+    env_file:
+      - ./.env
+
+  subgraphs_notification:
+    image: mylifenp/subgraphs_notification:latest
+    container_name: subgraphs_notification
+    ports:
+      - '8007:8001'
+    restart: always
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:8007/graphql"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      mongodb:
+        condition: service_started
+      redis:
+        condition: service_started
+      redis-ps:
+        condition: service_started
+      minio:
+        condition: service_started
+    env_file:
+      - ./.env
+
+  subgraphs_work:
+    image: mylifenp/subgraphs_work:latest
+    container_name: subgraphs_work
+    ports:
+      - '8008:8001'
+    restart: always
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:8008/graphql"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      mongodb:
+        condition: service_started
+      redis:
+        condition: service_started
+      redis-ps:
+        condition: service_started
+      minio:
+        condition: service_started
+    env_file:
+      - ./.env
+
   mongodb:
     image: 'mongo:latest'
     restart: 'always'
