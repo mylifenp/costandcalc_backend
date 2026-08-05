@@ -851,15 +851,13 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       always() &&
-        (
-          (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-          (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/develop')
-        ) &&
+        github.event_name == 'push' &&
+        github.ref == 'refs/heads/main' &&
         needs.main.result == 'success' &&
         contains(fromJSON('["success","skipped"]'), needs.build-subgraphs-admin.result) &&
         contains(fromJSON('["success","skipped"]'), needs.build-subgraphs-assets.result) &&
         contains(fromJSON('["success","skipped"]'), needs.build-subgraphs-billing.result) &&
-        contains(fromJSON('["success","skipped"]'), needs.build-subgraphs-estimate.result) &&
+        contains(fromJSON('["success","skipped"]'), needs.build-subgraphs-estimation.result) &&
         contains(fromJSON('["success","skipped"]'), needs.build-subgraphs-identity.result) &&
         contains(fromJSON('["success","skipped"]'), needs.build-subgraphs-media.result) &&
         contains(fromJSON('["success","skipped"]'), needs.build-subgraphs-notification.result) &&
