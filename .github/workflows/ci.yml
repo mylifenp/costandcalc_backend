@@ -168,7 +168,10 @@ jobs:
   build-subgraphs-admin:
     runs-on: ubuntu-latest
     needs: main
-    if: contains(needs.main.outputs.affected, 'subgraphs_admin') && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: |
+      contains(needs.main.outputs.affected, 'subgraphs_admin') &&
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/develop')
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -249,7 +252,10 @@ jobs:
   build-subgraphs-assets:
     runs-on: ubuntu-latest
     needs: main
-    if: contains(needs.main.outputs.affected, 'subgraphs_assets') && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: |
+      contains(needs.main.outputs.affected, 'subgraphs_assets') &&
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/develop')
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -330,7 +336,10 @@ jobs:
   build-subgraphs-billing:
     runs-on: ubuntu-latest
     needs: main
-    if: contains(needs.main.outputs.affected, 'subgraphs_billing') && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: |
+      contains(needs.main.outputs.affected, 'subgraphs_billing') &&
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/develop')
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -411,7 +420,10 @@ jobs:
   build-subgraphs-estimation:
     runs-on: ubuntu-latest
     needs: main
-    if: contains(needs.main.outputs.affected, 'subgraphs_estimation') && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: |
+      contains(needs.main.outputs.affected, 'subgraphs_estimation') &&
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/develop')
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -492,7 +504,10 @@ jobs:
   build-subgraphs-identity:
     runs-on: ubuntu-latest
     needs: main
-    if: contains(needs.main.outputs.affected, 'subgraphs_identity') && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: |
+      contains(needs.main.outputs.affected, 'subgraphs_identity') &&
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/develop')
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -573,7 +588,10 @@ jobs:
   build-subgraphs-media:
     runs-on: ubuntu-latest
     needs: main
-    if: contains(needs.main.outputs.affected, 'subgraphs_media') && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: |
+      contains(needs.main.outputs.affected, 'subgraphs_media') &&
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/develop')
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -654,7 +672,10 @@ jobs:
   build-subgraphs-notification:
     runs-on: ubuntu-latest
     needs: main
-    if: contains(needs.main.outputs.affected, 'subgraphs_notification') && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: |
+      contains(needs.main.outputs.affected, 'subgraphs_notification') &&
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/develop')
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -735,7 +756,10 @@ jobs:
   build-subgraphs-work:
     runs-on: ubuntu-latest
     needs: main
-    if: contains(needs.main.outputs.affected, 'subgraphs_work') && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: |
+      contains(needs.main.outputs.affected, 'subgraphs_work') &&
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/develop')
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -814,43 +838,52 @@ jobs:
           done <<< "${tags_to_delete}"
 
   deploy-on-vps:
-      needs:
-        - main
-        - build-subgraphs-admin
-      runs-on: ubuntu-latest
-      if: |
-        always() &&
-        github.event_name == 'push' &&
-        github.ref == 'refs/heads/main' &&
+    needs:
+      - main
+      - build-subgraphs-admin
+      - build-subgraphs-assets
+      - build-subgraphs-billing
+      - build-subgraphs-estimate
+      - build-subgraphs-identity
+      - build-subgraphs-media
+      - build-subgraphs-notification
+      - build-subgraphs-work
+    runs-on: ubuntu-latest
+    if: |
+      always() &&
+        (
+          (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+          (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/develop')
+        ) &&
         needs.main.result == 'success' &&
-        (needs.build-subgraphs-admin.result == 'success' || needs.build-subgraphs-admin.result == 'skipped') &&
-        (needs.build-subgraphs-assets.result == 'success' || needs.build-subgraphs-admin.result == 'skipped') &&
-        (needs.build-subgraphs-billing.result == 'success' || needs.build-subgraphs-admin.result == 'skipped') &&
-        (needs.build-subgraphs-estimate.result == 'success' || needs.build-subgraphs-admin.result == 'skipped') &&
-        (needs.build-subgraphs-identity.result == 'success' || needs.build-subgraphs-admin.result == 'skipped') &&
-        (needs.build-subgraphs-media.result == 'success' || needs.build-subgraphs-media.result == 'skipped') &&
-        (needs.build-subgraphs-notification.result == 'success' || needs.build-subgraphs-notification.result == 'skipped') &&
-        (needs.build-subgraphs-work.result == 'success' || needs.build-subgraphs-work.result == 'skipped')
-      steps:
-        - name: Checkout code
-          uses: actions/checkout@v6
+        contains(fromJSON('["success","skipped"]'), needs.build-subgraphs-admin.result) &&
+        contains(fromJSON('["success","skipped"]'), needs.build-subgraphs-assets.result) &&
+        contains(fromJSON('["success","skipped"]'), needs.build-subgraphs-billing.result) &&
+        contains(fromJSON('["success","skipped"]'), needs.build-subgraphs-estimate.result) &&
+        contains(fromJSON('["success","skipped"]'), needs.build-subgraphs-identity.result) &&
+        contains(fromJSON('["success","skipped"]'), needs.build-subgraphs-media.result) &&
+        contains(fromJSON('["success","skipped"]'), needs.build-subgraphs-notification.result) &&
+        contains(fromJSON('["success","skipped"]'), needs.build-subgraphs-work.result)
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
 
-        - name: Copy Docker Compose file to server
-          run: |
-            sudo apt-get update
-            sudo apt-get install -y sshpass
-            sshpass -p "${{ secrets.PASSPHRASE }}" scp -o StrictHostKeyChecking=no dockers/docker-compose.yml "${{ secrets.VPS_USER }}"@"${{ secrets.VPS_HOST }}":~/costandcalc_backend/
-            sshpass -p "${{ secrets.PASSPHRASE }}" scp -o StrictHostKeyChecking=no router-config.yml "${{ secrets.VPS_USER }}"@"${{ secrets.VPS_HOST }}":~/costandcalc_backend/
-            sshpass -p "${{ secrets.PASSPHRASE }}" scp -o StrictHostKeyChecking=no graph.production.yml "${{ secrets.VPS_USER }}"@"${{ secrets.VPS_HOST }}":~/costandcalc_backend/
+      - name: Copy Docker Compose file to server
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sshpass
+          sshpass -p "${{ secrets.PASSPHRASE }}" scp -o StrictHostKeyChecking=no dockers/docker-compose.yml "${{ secrets.VPS_USER }}"@"${{ secrets.VPS_HOST }}":~/costandcalc_backend/
+          sshpass -p "${{ secrets.PASSPHRASE }}" scp -o StrictHostKeyChecking=no router-config.yml "${{ secrets.VPS_USER }}"@"${{ secrets.VPS_HOST }}":~/costandcalc_backend/
+          sshpass -p "${{ secrets.PASSPHRASE }}" scp -o StrictHostKeyChecking=no graph.production.yml "${{ secrets.VPS_USER }}"@"${{ secrets.VPS_HOST }}":~/costandcalc_backend/
 
-        - name: Deploy to VPS
-          uses: appleboy/ssh-action@master
-          with:
-            host: ${{ secrets.VPS_HOST }}
-            username: ${{ secrets.VPS_USER }}
-            key: ${{ secrets.SSH_PRIVATE_KEY }}
-            passphrase: ${{ secrets.PASSPHRASE }}
-            script: |
-              cd ~/costandcalc_backend
-              docker compose pull
-              docker compose up -d
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+          script: |
+            cd ~/costandcalc_backend
+            docker compose pull
+            docker compose up -d
