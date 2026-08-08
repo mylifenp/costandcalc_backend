@@ -19,13 +19,14 @@ addopts = """
 name = "organization_management"
 version = "1.0.0"
 description = "Organization management"
-requires-python = ">=3.9,<4"
+requires-python = ">=3.10,<4"
 readme = 'README.md'
 dependencies = [
   "strawberry-graphql[cli]",
   "fastapi",
   "dotenv",
   "uvicorn",
+  "mantelo",
   "httpx2"
 ]
 

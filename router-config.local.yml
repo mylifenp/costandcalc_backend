@@ -25,14 +25,54 @@ headers:
         named: Access-Token
       - op: "propagate"
         named: ID-Token
+
+cors:
+  enabled: true
+  allow_origins:
+    - "http://localhost:3000"
+    - "http://localhost:3001"
+  allow_methods:
+    - "GET"
+    - "POST"
+    - "OPTIONS"
+  allow_headers:
+    - "Content-Type"
+    - "Authorization"
+    - "Access-Token"
+    - "ID-Token"
+  allow_credentials: true
+
 execution_config:
   file:
   # Path to the previous generated file
     path: "router.json" # or EXECUTION_CONFIG_FILE_PATH
     watch: true # EXECUTION_CONFIG_FILE_WATCH
 
+
 websocket:
   enabled: true
+  authentication:
+    from_initial_payload:
+      enabled: true
+      key: "Authorization"
+      export_token:
+        enabled: true
+        header_key: "Authorization"
+  forward_upgrade_headers:
+    enabled: true
+    allow_list:
+      - "Authorization"
+      - "Access-Token"
+      - "ID-Token"
+
+# Client (browser) example — graphql-ws:
+# const client = createClient({
+#   url: 'ws://localhost:8099/graphql',
+#   connectionParams: { Authorization: `Bearer ${token}` }
+# });
+
+# websocket:
+#   enabled: true
 #  authentication:
 #    from_initial_payload:
 #      enabled: true
