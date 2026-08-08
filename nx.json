@@ -5,6 +5,9 @@
     "production": ["default"],
     "sharedGlobals": []
   },
+  "sync": {
+    "globalGenerators": ["@nxlv/python:pkg-sync"]
+  },
   "plugins": [
     {
       "plugin": "@nx/js/typescript",
@@ -18,6 +21,13 @@
           "buildDepsName": "build-deps",
           "watchDepsName": "watch-deps"
         }
+      }
+    },
+    {
+      "plugin": "@nxlv/python",
+      "options": {
+        "packageManager": "uv",
+        "inferDependencies": true
       }
     },
     "@monodon/rust"

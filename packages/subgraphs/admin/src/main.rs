@@ -21,7 +21,7 @@ async fn main() {
     dotenv().ok();
 
     // host should always be 0.0.0.0 for docker.
-    let host = env::var("ADMIN_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
+    let host = env::var("BACKEND_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
     let port = env::var("ADMIN_PORT").unwrap_or_else(|_| "8001".to_string());
 
     let cors = CorsLayer::new()

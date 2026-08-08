@@ -32,3 +32,7 @@ subgraphs:
     routing_url: http://0.0.0.0:8008/graphql
     introspection:
       url: http://0.0.0.0:8008/graphql
+  - name: organization_management
+    routing_url: http://0.0.0.0:8009/graphql
+    introspection:
+      url: http://0.0.0.0:8009/graphql
