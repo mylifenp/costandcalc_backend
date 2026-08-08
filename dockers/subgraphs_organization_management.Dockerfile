@@ -26,7 +26,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 ########################################################
 # Runtime
 ########################################################
-FROM python:3.12-slim-bookworm
+FROM python:3.14-slim-bookworm
 
 RUN groupadd --system app \
  && useradd --system \
