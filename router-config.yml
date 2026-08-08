@@ -1,21 +1,19 @@
 version: "1"
 
-dev_mode: true
-log_level: "debug"
+dev_mode: false
+log_level: "error"
 listen_addr: "0.0.0.0:8099"
-playground_path: "/graphql"
-introspection_enabled: true
+playground_path: ""
+introspection_enabled: false
 json_log: true
 shutdown_delay: 15s
 grace_period: 20s
 poll_interval: 10s
 health_check_path: "/health"
-readiness_check_path: "/health/ready"
-liveness_check_path: "/health/live"
 
 file_upload:
   enabled: true
-  max_file_size: 10MB
+  max_file_size: 5MB
   max_files: 2
 
 headers:
@@ -25,21 +23,112 @@ headers:
         named: Access-Token
       - op: "propagate"
         named: ID-Token
+        cookie_whitelist:
+          - "next-auth.session-token"
+          - "__Secure-next-auth.session-token"
+cors:
+  enabled: true
+  allow_origins:
+    - "https://costandcalc.com"
+    - "https://admin.costandcalc.com"
+    - "https://kostundcalc.de"
+    - "https://admin.kostundcalc.de"
+  allow_methods:
+    - "HEAD"
+    - "GET"
+    - "POST"
+    - "OPTIONS"
+  allow_headers:
+    - "Content-Type"
+    - "Authorization"
+    - "Access-Token"
+    - "ID-Token"
+  allow_credentials: true
+  authentication:
+    jwt:
+      header_name: "Authorization"
+      header_value_prefix: "Bearer"
+      jwks:
+        - url: "https://auth.example.com/.well-known/jwks.json"   # YOUR identity provider
+          audiences: ["api://default"]
+          refresh_interval: "5m"
+      scope_claim: "scope"
+      header_sources:
+        - type: "header"
+          name: "Authorization"
+      ignore_introspection: false
+
+  authorization:
+    require_authentication: true
+    reject_operation_if_unauthorized: true
+
+  rate_limit:
+    enabled: true
+    strategy: simple
+    simple_strategy:
+      rate: 10
+      burst: 20
+      period: "1s"
+      reject_exceeding_requests: true
+      reject_status_code: 429
+
+  complexity_limits:
+    mode: "enforce"
+    depth:
+      enabled: true
+      limit: 8
+    total_fields:
+      enabled: true
+      limit: 400
+    root_fields:
+      enabled: true
+      limit: 20
+
+  router:
+    response:
+      - name: "Strict-Transport-Security"
+        expression: "'max-age=63072000; includeSubDomains; preload'"
+      - name: "X-Content-Type-Options"
+        expression: "'nosniff'"
+      - name: "X-Frame-Options"
+        expression: "'DENY'"
+      - name: "Referrer-Policy"
+        expression: "'no-referrer'"
+
+  websocket:
+    enabled: true
+    authentication:
+      from_initial_payload:
+        enabled: true
+        key: "Authorization"
+        export_token:
+          enabled: true
+          header_key: "Authorization"
+    forward_upgrade_headers:
+      enabled: true
+      allow_list:
+        - "Authorization"
+        - "Access-Token"
+        - "ID-Token"
 execution_config:
   file:
   # Path to the previous generated file
-    path: "/data/router.json" # or EXECUTION_CONFIG_FILE_PATH
-    watch: true # EXECUTION_CONFIG_FILE_WATCH
+    path: "router.json" # or EXECUTION_CONFIG_FILE_PATH
+    watch: false # EXECUTION_CONFIG_FILE_WATCH
+
 
 websocket:
   enabled: true
-#  authentication:
-#    from_initial_payload:
-#      enabled: true
-#      key: "Authorization" # The property name in the initial payload holding the JWT. Default is 'Authorization'.
-#      export_token:
-#        enabled: true
-#        header_key: "Authorization" # Header key for exporting the JWT to the request header. If different from 'Authorization', include it in 'forward_upgrade_headers'.
-#  forward_upgrade_headers: # Forward upgrade request headers in the extensions payload when starting a subscription on a Subgraph.
-#    enabled: true
-#    allow_list: ["Authorization"] # Headers to forward when initiating a subscription on a subgraph. Default is 'Authorization'.
+  authentication:
+    from_initial_payload:
+      enabled: true
+      key: "Authorization"
+      export_token:
+        enabled: true
+        header_key: "Authorization"
+  forward_upgrade_headers:
+    enabled: true
+    allow_list:
+      - "Authorization"
+      - "Access-Token"
+      - "ID-Token"
