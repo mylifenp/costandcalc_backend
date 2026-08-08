@@ -8,6 +8,7 @@ from strawberry.fastapi import GraphQLRouter
 load_dotenv()
 
 port_str = os.getenv("ORGANIZATION_MANAGEMENT_PORT")
+
 PORT = int(port_str) if port_str else 8009
 HOST = os.getenv("BACKEND_HOST", "0.0.0.0")
 

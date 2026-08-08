@@ -4,7 +4,7 @@ ARG PROJECT_DIR=packages/subgraphs/organization_management
 ########################################################
 # Builder
 ########################################################
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
+FROM ghcr.io/astral-sh/uv:python3.14-bookworm-slim AS builder
 ARG PROJECT_DIR
 
 ENV UV_COMPILE_BYTECODE=1 \
