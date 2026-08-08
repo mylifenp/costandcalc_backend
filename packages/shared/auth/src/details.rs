@@ -1,8 +1,7 @@
 use dotenvy::dotenv;
 use jsonwebtoken::{
-    decode,
+    Algorithm, DecodingKey, Validation, decode,
     errors::{Error as JwtError, ErrorKind},
-    Algorithm, DecodingKey, Validation,
 };
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, env};
@@ -56,12 +55,19 @@ pub struct Claims {
     pub aud: String,
     pub sub: String,
     pub exp: u64,
+    #[serde(default)]
     pub email_verified: bool,
+    #[serde(default)]
     pub name: String,
+    #[serde(default)]
     pub preferred_username: String,
+    #[serde(default)]
     pub given_name: String,
+    #[serde(default)]
     pub family_name: String,
+    #[serde(default)]
     pub email: String,
+    #[serde(default)]
     pub locale: String,
     pub organization: Option<String>,
     #[serde(rename = "organization_ids")]
@@ -71,25 +77,42 @@ pub struct Claims {
 
 pub fn decode_token(token: &str) -> Result<Claims> {
     if let Some(jwt_secret) = get_env_value("JWT_SECRET") {
-        let issuer = get_env_value("ISSUER")
-            .unwrap_or_else(|| "https://auth.datenium.de/realms/meatone".to_string());
         let mut validation = Validation::new(Algorithm::RS256);
-        validation.set_audience(&["meatone_id"]);
+
+        let issuer = get_env_value("ISSUER")
+            .unwrap_or_else(|| "https://auth.datenium.de/realms/cost_and_calc".to_string());
+        let issuer_id =
+            get_env_value("ISSUER_ID").unwrap_or_else(|| "cost_and_calc_id".to_string());
+
+        validation.set_audience(&[&issuer_id]);
         validation.set_issuer(&[&issuer]);
-        validation.validate_aud = false;
+        validation.validate_aud = true;
         validation.required_spec_claims = HashSet::new();
 
-        let token_data = decode::<Claims>(
-            &token,
-            &DecodingKey::from_rsa_pem(jwt_secret.as_bytes())?,
-            &validation,
-        )?;
+        let decoding_key = match DecodingKey::from_rsa_pem(jwt_secret.as_bytes()) {
+            Ok(key) => key,
+            Err(e) => {
+                // eprintln!("KEY_PARSE_ERROR: {:?} - {}", e.kind(), e);
+                return Err(AuthError::from(e));
+            }
+        };
 
-        Ok(token_data.claims)
+        match decode::<Claims>(token, &decoding_key, &validation) {
+            Ok(token_data) => {
+                // println!("TOKEN_DATA: {:?}", token_data);
+                Ok(token_data.claims)
+            }
+            Err(e) => {
+                // eprintln!("TOKEN_DECODE_ERROR: kind={:?}, msg={}", e.kind(), e);
+                Err(AuthError::from(e))
+            }
+        }
     } else {
+        // eprintln!("TOKEN_ERROR: JWT_SECRET not set");
         Err(AuthError::InvalidKeyFormat)
     }
 }
+
 impl Claims {
     pub fn roles(&self) -> Vec<String> {
         self.realm_access

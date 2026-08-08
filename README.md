@@ -112,7 +112,7 @@ Join the Nx community:
 
 # working for router
 export EXECUTION_CONFIG_FILE_PATH=$(pwd)/router.json
-./router run --config config.yml
+./router --config config.yml
 
 
 # running the project

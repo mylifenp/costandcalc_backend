@@ -1,5 +1,5 @@
 use async_graphql::{EmptyMutation, EmptySubscription, Schema};
-// use dotenvy::dotenv;
+use dotenvy::dotenv;
 use shared::keycloak::client::KeycloakClient;
 
 use crate::graphql::query::Query;
@@ -7,10 +7,10 @@ use crate::graphql::query::Query;
 pub type AppSchema = Schema<Query, EmptyMutation, EmptySubscription>;
 
 pub async fn build_schema() -> AppSchema {
-    // dotenv().ok();
+    dotenv().ok();
 
     // let mongo_uri =
-    //     env::var("ORDER_MONGODB_URI").expect("ORDER_MONGODB_URI must be set in .env file");
+    //     env::var("ADMIN_MONGODB_URI").expect("ADMIN_MONGODB_URI must be set in .env file");
     // // Initialize MongoDB
     // init_db(mongo_uri).await.expect("MongoDB init failed");
 
@@ -32,11 +32,7 @@ pub async fn build_schema() -> AppSchema {
     //         .expect("MongoDB init failed"),
     // );
 
-    let schema = Schema::build(
-        Query::default(),
-        EmptyMutation,
-        EmptySubscription,
-    );
+    let schema = Schema::build(Query::default(), EmptyMutation, EmptySubscription);
 
     schema
         // .data(cache)

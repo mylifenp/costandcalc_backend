@@ -1,0 +1,45 @@
+version: "1"
+
+dev_mode: true
+log_level: "debug"
+listen_addr: "0.0.0.0:8099"
+playground_path: "/graphql"
+introspection_enabled: true
+json_log: true
+shutdown_delay: 15s
+grace_period: 20s
+poll_interval: 10s
+health_check_path: "/health"
+readiness_check_path: "/health/ready"
+liveness_check_path: "/health/live"
+
+file_upload:
+  enabled: true
+  max_file_size: 10MB
+  max_files: 2
+
+headers:
+  all:
+    request:
+      - op: "propagate"
+        named: Access-Token
+      - op: "propagate"
+        named: ID-Token
+execution_config:
+  file:
+  # Path to the previous generated file
+    path: "router.json" # or EXECUTION_CONFIG_FILE_PATH
+    watch: true # EXECUTION_CONFIG_FILE_WATCH
+
+websocket:
+  enabled: true
+#  authentication:
+#    from_initial_payload:
+#      enabled: true
+#      key: "Authorization" # The property name in the initial payload holding the JWT. Default is 'Authorization'.
+#      export_token:
+#        enabled: true
+#        header_key: "Authorization" # Header key for exporting the JWT to the request header. If different from 'Authorization', include it in 'forward_upgrade_headers'.
+#  forward_upgrade_headers: # Forward upgrade request headers in the extensions payload when starting a subscription on a Subgraph.
+#    enabled: true
+#    allow_list: ["Authorization"] # Headers to forward when initiating a subscription on a subgraph. Default is 'Authorization'.
