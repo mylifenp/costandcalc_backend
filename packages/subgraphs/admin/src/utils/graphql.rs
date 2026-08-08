@@ -1,15 +1,17 @@
 use async_graphql::http::ALL_WEBSOCKET_PROTOCOLS;
 use async_graphql_axum::{GraphQLProtocol, GraphQLRequest, GraphQLResponse, GraphQLWebSocket};
 use axum::{
-    extract::{ws::WebSocketUpgrade, State},
+    extract::{State, ws::WebSocketUpgrade},
     http::HeaderMap,
     response::Response,
 };
-use shared::{details::{Claims, decode_token}, on_subscription_init, tokens::{Tokens, get_access_token, get_id_token}};
+use shared::{
+    details::{Claims, decode_token},
+    on_subscription_init,
+    tokens::{Tokens, get_access_token, get_id_token},
+};
 
 use crate::graphql::schema::schema::AppSchema;
-
-
 
 pub async fn graphql_handler(
     State(schema): State<AppSchema>,
