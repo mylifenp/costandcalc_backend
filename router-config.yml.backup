@@ -1,0 +1,247 @@
+version: "1"
+
+dev_mode: false
+log_level: "error"
+listen_addr: "0.0.0.0:8099"
+playground_path: "/graphql"
+introspection_enabled: false
+json_log: true
+shutdown_delay: 15s
+grace_period: 20s
+poll_interval: 10s
+health_check_path: "/health"
+
+file_upload:
+  enabled: true
+  max_file_size: 5MB
+  max_files: 2
+
+headers:
+  all:
+    request:
+      - op: "propagate"
+        named: Access-Token
+      - op: "propagate"
+        named: ID-Token
+  cookie_whitelist:
+    - "next-auth.session-token"
+    - "__Secure-next-auth.session-token"
+
+cors:
+  enabled: true
+  allow_origins:
+    - "https://costandcalc.com"
+    - "https://admin.costandcalc.com"
+    - "https://kostundcalc.de"
+    - "https://admin.kostundcalc.de"
+    - "http://localhost:3000"
+    - "http://localhost:3001"
+  allow_methods:
+    - "HEAD"
+    - "GET"
+    - "POST"
+    - "OPTIONS"
+  allow_headers:
+    - "Content-Type"
+    - "Authorization"
+    - "Access-Token"
+    - "ID-Token"
+  allow_credentials: true
+
+authentication:
+  jwt:
+    header_name: "Authorization"
+    header_value_prefix: "Bearer"
+    jwks:
+      - url: "https://auth.datenium.de/realms/cost_and_calc/protocol/openid-connect/certs"   # YOUR identity provider
+        audiences: ["api://default"]
+        refresh_interval: "5m"
+    scope_claim: "scope"
+    header_sources:
+      - type: "header"
+        name: "Authorization"
+  ignore_introspection: false
+
+authorization:
+  require_authentication: true
+  reject_operation_if_unauthorized: true
+
+rate_limit:
+  enabled: true
+  strategy: simple
+  simple_strategy:
+    rate: 10
+    burst: 20
+    period: "1s"
+    reject_exceeding_requests: true
+    reject_status_code: 429
+  storage:
+    cluster_enabled: false
+    urls:
+      - "${RATE_LIMIT_REDIS_URL}"
+    key_prefix: "cosmo_rate_limit"
+
+security:
+  complexity_limits:
+    mode: "enforce"
+    ignore_introspection: false
+    depth:
+      enabled: true
+      limit: 8
+    total_fields:
+      enabled: true
+      limit: 400
+    root_fields:
+      enabled: true
+      limit: 20
+
+traffic_shaping:
+  # Apply to all requests from clients to the router
+  router:
+    # Is the maximum size of the request body in MB, mib
+    max_request_body_size: 5MB
+    max_header_bytes: 1MiB
+    decompression_enabled: true
+    response_compression_min_size: 4KiB
+
+websocket:
+  enabled: true
+  authentication:
+    from_initial_payload:
+      enabled: true
+      key: "Authorization"
+      export_token:
+        enabled: true
+        header_key: "Authorization"
+  forward_upgrade_headers:
+    enabled: true
+    allow_list:
+      - "Authorization"
+      - "Access-Token"
+      - "ID-Token"
+
+execution_config:
+  file:
+  # Path to the composed execution config written by the compose-config
+  # service into the shared router-data volume (mounted at /data)
+    path: "/data/router.json" # or EXECUTION_CONFIG_FILE_PATH
+    watch: false # EXECUTION_CONFIG_FILE_WATCH
+
+
+# version: "1"
+
+# dev_mode: false
+# log_level: "error"
+# listen_addr: "0.0.0.0:8099"
+# playground_path: ""
+# introspection_enabled: false
+# json_log: true
+# shutdown_delay: 15s
+# grace_period: 20s
+# poll_interval: 10s
+# health_check_path: "/health"
+
+# file_upload:
+#   enabled: true
+#   max_file_size: 5MB
+#   max_files: 2
+
+# headers:
+#   all:
+#     request:
+#       - op: "propagate"
+#         named: Access-Token
+#       - op: "propagate"
+#         named: ID-Token
+#         cookie_whitelist:
+#           - "next-auth.session-token"
+#           - "__Secure-next-auth.session-token"
+# cors:
+#   enabled: true
+#   allow_origins:
+#     - "https://costandcalc.com"
+#     - "https://admin.costandcalc.com"
+#     - "https://kostundcalc.de"
+#     - "https://admin.kostundcalc.de"
+#   allow_methods:
+#     - "HEAD"
+#     - "GET"
+#     - "POST"
+#     - "OPTIONS"
+#   allow_headers:
+#     - "Content-Type"
+#     - "Authorization"
+#     - "Access-Token"
+#     - "ID-Token"
+#   allow_credentials: true
+#   authentication:
+#     jwt:
+#       header_name: "Authorization"
+#       header_value_prefix: "Bearer"
+#       jwks:
+#         - url: "https://auth.datenium.de/realms/cost_and_calc/protocol/openid-connect/certs"   # YOUR identity provider
+#           audiences: ["api://default"]
+#           refresh_interval: "5m"
+#       scope_claim: "scope"
+#       header_sources:
+#         - type: "header"
+#           name: "Authorization"
+#       ignore_introspection: false
+
+#   authorization:
+#     require_authentication: true
+#     reject_operation_if_unauthorized: true
+
+#   rate_limit:
+#     enabled: true
+#     strategy: simple
+#     simple_strategy:
+#       rate: 10
+#       burst: 20
+#       period: "1s"
+#       reject_exceeding_requests: true
+#       reject_status_code: 429
+
+#   complexity_limits:
+#     mode: "enforce"
+#     depth:
+#       enabled: true
+#       limit: 8
+#     total_fields:
+#       enabled: true
+#       limit: 400
+#     root_fields:
+#       enabled: true
+#       limit: 20
+
+#   router:
+#     response:
+#       - name: "Strict-Transport-Security"
+#         expression: "'max-age=63072000; includeSubDomains; preload'"
+#       - name: "X-Content-Type-Options"
+#         expression: "'nosniff'"
+#       - name: "X-Frame-Options"
+#         expression: "'DENY'"
+#       - name: "Referrer-Policy"
+#         expression: "'no-referrer'"
+
+#   websocket:
+#     enabled: true
+#     authentication:
+#       from_initial_payload:
+#         enabled: true
+#         key: "Authorization"
+#         export_token:
+#           enabled: true
+#           header_key: "Authorization"
+#     forward_upgrade_headers:
+#       enabled: true
+#       allow_list:
+#         - "Authorization"
+#         - "Access-Token"
+#         - "ID-Token"
+# execution_config:
+#   file:
+#   # Path to the previous generated file
+#     path: "router.json" # or EXECUTION_CONFIG_FILE_PATH
+#     watch: false # EXECUTION_CONFIG_FILE_WATCH
