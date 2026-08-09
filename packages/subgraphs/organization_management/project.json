@@ -77,7 +77,7 @@
     "run": {
       "executor": "@nxlv/python:run-commands",
       "options": {
-        "command": "uv run python main.py",
+        "command": "uv run python src/main.py",
         "cwd": "{projectRoot}"
       }
     }
