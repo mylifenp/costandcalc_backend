@@ -1,10 +1,11 @@
-import strawberry
+from .domain import Domain
+from .group import Group
+from .member import Member
+from .organization import Organization
+from .user import User
 
-from graphql_api.mutation import Mutation
-from graphql_api.query import Query
-
-schema = strawberry.federation.Schema(
-    query=Query,
-    mutation=Mutation,
-    federation_version="2.5",
-)
+__all__ = [
+    "Domain", "Group",
+    "Member", "Organization",
+    "User"
+]

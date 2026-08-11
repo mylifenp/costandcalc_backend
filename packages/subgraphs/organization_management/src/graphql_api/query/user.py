@@ -1,7 +1,7 @@
 import strawberry
 
-from graphql_api.schema.user import User
-from repositories.user import get_user, get_users
+from graphql_api.resolvers.user import get_user, get_users
+from graphql_api.schema import User
 
 
 @strawberry.type

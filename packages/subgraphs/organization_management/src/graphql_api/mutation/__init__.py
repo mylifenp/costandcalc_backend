@@ -1,9 +1,5 @@
-import strawberry
-
-from graphql_api.mutation.book import BookMutations
+from graphql_api.mutation.mutation import Mutation
+from graphql_api.mutation.organization import OrganizationMutation
 from graphql_api.mutation.user import UserMutation
 
-
-@strawberry.type
-class Mutation(BookMutations, UserMutation):
-    pass
+__all__ = ["Mutation", "UserMutation", "OrganizationMutation"]

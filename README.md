@@ -119,3 +119,7 @@ export EXECUTION_CONFIG_FILE_PATH=$(pwd)/router.json
 `nx run-many --target=run --all --parallel=9`
 
 to start cosmo-router in the root directory, run ./router/wgc.sh
+
+
+# cost and calc Auth backend
+https://auth.datenium.de/admin/cost_and_calc/console/

@@ -1,10 +1,12 @@
+import asyncio
 import os
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from strawberry.fastapi import GraphQLRouter
 
-from graphql_api.schema import schema
+from schema import schema
 
 load_dotenv()
 
@@ -15,6 +17,20 @@ HOST = os.getenv("BACKEND_HOST", "0.0.0.0")
 graphql_app = GraphQLRouter(schema)
 
 app = FastAPI()
+
+
+
+app = FastAPI()
+
+@app.middleware("http")
+async def timeout_middleware(request: Request, call_next):
+    try:
+        return await asyncio.wait_for(call_next(request), timeout=5.0)
+    except asyncio.TimeoutError:
+        return JSONResponse(
+            {"detail": "Request timed out"},
+            status_code=504,
+        )
 
 app.include_router(
     graphql_app,
