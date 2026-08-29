@@ -1,18 +1,18 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypedDict, cast, Any, List
+from typing import TYPE_CHECKING, TypedDict, cast
 
 import httpx2
 import strawberry
 from fastapi import Request
 
 from graphql_api.errors import UpstreamServiceError
-from graphql_api.schema.group import Group
 from graphql_api.schema.member import Member
 from keycloak_client.client import keycloak_client
 
 if TYPE_CHECKING:
     from graphql_api.schema.organization import Organization
+    from graphql_api.schema.group import Group
 
 
 class _MemberDict(TypedDict):
@@ -51,14 +51,7 @@ def get_organization_members(root: Organization, info: strawberry.Info) -> list[
     client = keycloak_client(cast(Request, info.context["request"]))
 
     try:
-        members_raw = client.organizations(root.id).members.get()
-        # Some client wrappers return (Response, body) tuples, others return
-        # the body directly. Normalize before casting to our typed shape.
-        if isinstance(members_raw, tuple) and len(members_raw) >= 2:
-            members_payload = members_raw[1]
-        else:
-            members_payload = members_raw
-        members = cast(List[_MemberDict], members_payload)
+        members = client.organizations(root.id).members.get()
     except httpx2.HTTPError as err:
         raise UpstreamServiceError("Failed to fetch organization members") from err
     return [_to_member(cast(_MemberDict, member)) for member in members]
@@ -68,12 +61,7 @@ def get_group_members(root: Group, info: strawberry.Info) -> list[Member]:
     client = keycloak_client(cast(Request, info.context["request"]))
 
     try:
-        members_raw = client.groups(root.id).members.get()
-        if isinstance(members_raw, tuple) and len(members_raw) >= 2:
-            members_payload = members_raw[1]
-        else:
-            members_payload = members_raw
-        members = cast(List[_MemberDict], members_payload)
+        members = client.groups(root.id).members.get()
     except httpx2.HTTPError as err:
         raise UpstreamServiceError("Failed to fetch group members") from err
     return [_to_member(cast(_MemberDict, member)) for member in members]

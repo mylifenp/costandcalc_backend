@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import Any, Optional, TypedDict, cast
+from typing import Any, TypedDict, cast
 
 import httpx2
-from mantelo.client import KeycloakAdmin
 import strawberry
 from fastapi import Request
+from mantelo.client import KeycloakAdmin
 
 from graphql_api.errors import UpstreamServiceError
 from graphql_api.schema.domain import Domain
@@ -70,8 +70,7 @@ def _to_organization(org: _OrganizationDict) -> Organization:
 
 
 def get_organizations(info: strawberry.Info) -> list[Organization]:
-    request = cast(Request, info.context["request"])
-    client = keycloak_client(request)
+    client = keycloak_client(cast(Request, info.context["request"]))
     try:
         organizations_raw = client.organizations.get()
         organizations_payload = _unwrap_response(organizations_raw)
@@ -81,7 +80,7 @@ def get_organizations(info: strawberry.Info) -> list[Organization]:
     return [_to_organization(cast(_OrganizationDict, org)) for org in organizations]
 
 
-def get_organization(info: strawberry.Info, id: str) -> Organization:
+def get_organization(info: strawberry.Info, id: strawberry.ID) -> Organization:
     request = cast(Request, info.context["request"])
     client = keycloak_client(request)
     try:
@@ -94,7 +93,7 @@ def get_organization(info: strawberry.Info, id: str) -> Organization:
 
 
 def create_organization_group(
-    client: KeycloakAdmin, organization_id: str, group_name: str
+    client: KeycloakAdmin, organization_id: strawberry.ID, group_name: str
 ) -> None:
     try:
         client.organizations(organization_id).groups.post({"name": group_name})
@@ -143,7 +142,7 @@ def search_organizations(
 
 def update_organization(
     info: strawberry.Info,
-    id: str,
+    id: strawberry.ID,
     input: UpdateOrganizationInput,
 ) -> Organization:
     org_input = {
@@ -166,7 +165,7 @@ def update_organization(
 
 def activate_organization(
     info: strawberry.Info,
-    id: str,
+    id: strawberry.ID,
 ) -> Organization:
     request = cast(Request, info.context["request"])
     client = keycloak_client(request)
@@ -183,7 +182,7 @@ def activate_organization(
 
 def deactivate_organization(
     info: strawberry.Info,
-    id: str,
+    id: strawberry.ID,
 ) -> Organization:
     request = cast(Request, info.context["request"])
     client = keycloak_client(request)

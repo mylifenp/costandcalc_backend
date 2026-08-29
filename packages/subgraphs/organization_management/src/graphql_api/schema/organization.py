@@ -5,8 +5,8 @@ import strawberry
 from graphql_api.resolvers.group import get_organization_groups
 from graphql_api.resolvers.member import get_organization_members
 from graphql_api.schema.domain import Domain
-from graphql_api.schema.member import Member
 from graphql_api.schema.group import Group
+from graphql_api.schema.member import Member
 
 
 @strawberry.enum
@@ -23,8 +23,8 @@ class Organization:
     enabled: bool
     description: str | None = None
     domains: list[Domain]
-    members: list[Member] = strawberry.field(resolver=get_organization_members)
-    groups: list[Group] = strawberry.field(resolver=get_organization_groups)
+    members: list[Member] | None = strawberry.field(resolver=get_organization_members)
+    groups: list[Group] | None = strawberry.field(resolver=get_organization_groups)
 
 
 @strawberry.type

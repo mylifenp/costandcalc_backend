@@ -1,10 +1,8 @@
-
 from __future__ import annotations
 
-from typing import cast
+from typing import TypedDict, cast
 
 import httpx2
-from requests.api import request
 import strawberry
 from fastapi import Request
 
@@ -13,55 +11,67 @@ from graphql_api.schema.user import AddUserInput, User
 from keycloak_client.client import keycloak_client
 
 
-def _to_user(user: dict) -> User:
+class _UserDict(TypedDict):
+    id: str
+    username: str
+    email: str
+    firstName: str
+    lastName: str
+    emailVerified: bool
+    enabled: bool
+
+
+def _to_user(user: _UserDict) -> User:
     return User(
-        id=user["id"],
+        id=strawberry.ID(user["id"]),
         username=user["username"],
         email=user["email"],
+        firstName=user["firstName"],
+        lastName=user["lastName"],
+        emailVerified=user["emailVerified"],
+        enabled=user["enabled"],
     )
 
 
 def get_user(id: strawberry.ID, info: strawberry.Info) -> User:
-    request: Request = info.context["request"]
-
-    access_token = request.headers.get("Access-Token")
-    if access_token is None:
-        raise Exception("Access-Token header is missing")
-    keycloak_client = connect_keycloak_client(access_token)
-
-
-    user = keycloak_client.get_user(id)
-    return _to_user(user)
-
-def get_users(self, info: strawberry.Info) -> list[User]:
-    request: Request = info.context["request"]
-
-    access_token = request.headers.get("Access-Token")
-    if access_token is None:
-        raise Exception("Access-Token header is missing")
-    keycloak_client = connect_keycloak_client(access_token)
+    request: Request = cast(Request, info.context["request"])
+    client = keycloak_client(request)
 
     try:
-        users = keycloak_client.get_users()
-        print("Users", users)
-        return [_to_user(user) for user in cast(list, users)]
-    except Exception as e:
-        raise Exception(f"Failed to get users: {e}")
+        user = client.get_user(id)
+    except httpx2.HTTPError as e:
+        raise UpstreamServiceError("Failed to fetch user") from e
+    return _to_user(cast(_UserDict, user))
 
-def add_user(self, info: strawberry.Info, input: AddUserInput) -> User:
+
+def get_users(info: strawberry.Info) -> list[User]:
+    request: Request = cast(Request, info.context["request"])
+    client = keycloak_client(request)
+
+    try:
+        users = client.get_users()
+    except httpx2.HTTPError as e:
+        raise UpstreamServiceError("Failed to get users: {e}") from e
+    # return [_to_user(user) for user in cast(list, users)]
+    return [_to_user(cast(_UserDict, user)) for user in users]
+
+
+def add_user(info: strawberry.Info, input: AddUserInput) -> User:
     user_input = {
         "username": input.username,
         "email": input.email,
         "enabled": input.enabled,
-        "credentials": [{
-            "type": input.credentials[0].type,
-            "value": input.credentials[0].value,
-        }],
+        "credentials": [
+            {
+                "type": input.credentials[0].type,
+                "value": input.credentials[0].value,
+            }
+        ],
     }
-    client = keycloak_client(info.context["request"])
+    client = keycloak_client(cast(Request, info.context["request"]))
     try:
         client.users.post(user_input)
-        user = client.users.get(username=input.username)[0]
+        user = cast(_UserDict, client.users.get(username=input.username)[0])
     except httpx2.HTTPError as e:
         raise UpstreamServiceError("Failed to create user") from e
-    return _to_user(cast(dict, user))
+    return _to_user(user)
