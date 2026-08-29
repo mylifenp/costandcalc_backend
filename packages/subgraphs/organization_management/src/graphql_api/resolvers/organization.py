@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from typing import cast, Any, List, Optional, TypedDict
-from fastapi import Request
+from typing import Any, TypedDict, cast, List, Optional
 
 import httpx2
 import strawberry
+from fastapi import Request
 
 from graphql_api.errors import UpstreamServiceError
 from graphql_api.schema.domain import Domain
@@ -22,6 +22,7 @@ from graphql_api.schema.organization import (
 )
 from keycloak_client.client import keycloak_client
 
+organization_group = ["OWNER", "ADMIN", "MEMBER", "VIEWER", "GUEST"]
 
 
 class _DomainDict(TypedDict):
@@ -29,11 +30,14 @@ class _DomainDict(TypedDict):
     verified: bool
 
 
-class _OrganizationDict(TypedDict, total=False):
+class _OrganizationDictRequired(TypedDict):
     id: str
     name: str
     alias: str
     enabled: bool
+
+
+class _OrganizationDict(_OrganizationDictRequired, total=False):
     description: Optional[str]
     domains: List[_DomainDict]
 
@@ -41,7 +45,7 @@ class _OrganizationDict(TypedDict, total=False):
 def _to_organization(org: _OrganizationDict) -> Organization:
     """Convert a Keycloak organization dict to the GraphQL Organization type."""
     return Organization(
-        id=org["id"],
+        id=strawberry.ID(org["id"]),
         name=org["name"],
         alias=org["alias"],
         enabled=org["enabled"],
@@ -76,7 +80,9 @@ def get_organization(self, info: strawberry.Info, id: str) -> Organization:
     return _to_organization(organization)
 
 
-def create_organization_group(client: Any, organization_id: str, group_name: str) -> None:
+def create_organization_group(
+    client: Any, organization_id: str, group_name: str
+) -> None:
     try:
         client.organizations(organization_id).groups.post({"name": group_name})
     except httpx2.HTTPError as e:
