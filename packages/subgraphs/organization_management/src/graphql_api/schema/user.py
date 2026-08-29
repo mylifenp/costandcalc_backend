@@ -1,7 +1,7 @@
 
 import strawberry
 
-from graphql_api.schema import Member
+from graphql_api.schema.member import Member
 
 
 @strawberry.federation.type(keys=["id"])

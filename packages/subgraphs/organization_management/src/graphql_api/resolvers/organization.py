@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import Any, TypedDict, cast, Optional
+from typing import Any, Optional, TypedDict, cast
 
 import httpx2
+from mantelo.client import KeycloakAdmin
 import strawberry
 from fastapi import Request
 
@@ -22,7 +23,7 @@ from graphql_api.schema.organization import (
 )
 from keycloak_client.client import keycloak_client
 
-organization_group = ["OWNER", "ADMIN", "MEMBER", "VIEWER", "GUEST"]
+organization_groups = ["OWNER", "ADMIN", "MEMBER", "VIEWER", "GUEST"]
 
 
 class _DomainDict(TypedDict):
@@ -93,7 +94,7 @@ def get_organization(info: strawberry.Info, id: str) -> Organization:
 
 
 def create_organization_group(
-    client: Any, organization_id: str, group_name: str
+    client: KeycloakAdmin, organization_id: str, group_name: str
 ) -> None:
     try:
         client.organizations(organization_id).groups.post({"name": group_name})
@@ -117,7 +118,10 @@ def create_organization(
         resp, _ = client.organizations.as_raw().post(org_input)
         location = resp.headers["Location"]
         organization_id = location.split("/")[-1]
-        print("ORGANIZATION_ID", organization_id)
+        if organization_id is None:
+            raise UpstreamServiceError("Failed to create organization")
+        for group_name in organization_groups:
+            create_organization_group(client, organization_id, group_name)
     except httpx2.HTTPError as e:
         raise UpstreamServiceError("Failed to create organization") from e
     return OrganizationCreateConfirmation(name=input.name, success=Status.SUCCESS)

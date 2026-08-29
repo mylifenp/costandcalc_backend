@@ -1,5 +1,7 @@
 import strawberry
 
+from graphql_api.schema.member import Member
+
 
 @strawberry.type
 class Group:
@@ -9,6 +11,7 @@ class Group:
     path: str
     parentId: str
     subGroupCount: int
+    members: list[Member]
 
 
 @strawberry.input

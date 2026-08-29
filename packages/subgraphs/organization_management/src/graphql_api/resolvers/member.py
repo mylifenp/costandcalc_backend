@@ -6,11 +6,12 @@ import httpx2
 import strawberry
 
 from graphql_api.errors import UpstreamServiceError
-from graphql_api.schema import Member
+from graphql_api.schema.member import Member
+from graphql_api.schema.group import Group
 from keycloak_client.client import keycloak_client
 
 if TYPE_CHECKING:
-    from graphql_api.schema import Organization
+    from graphql_api.schema.organization import Organization
 
 
 def _to_member(member: dict) -> Member:
@@ -32,4 +33,14 @@ def get_organization_members(root: Organization, info: strawberry.Info) -> list[
         members = client.organizations(root.id).members.get()
     except httpx2.HTTPError as err:
         raise UpstreamServiceError("Failed to fetch organization members") from err
+    return [_to_member(cast(dict, member)) for member in members]
+
+
+def get_group_members(root: Group, info: strawberry.Info) -> list[Member]:
+    client = keycloak_client(info.context["request"])
+
+    try:
+        members = client.groups(root.id).members.get()
+    except httpx2.HTTPError as err:
+        raise UpstreamServiceError("Failed to fetch group members") from err
     return [_to_member(cast(dict, member)) for member in members]
