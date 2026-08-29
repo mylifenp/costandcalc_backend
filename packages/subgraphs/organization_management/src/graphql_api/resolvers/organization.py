@@ -38,8 +38,19 @@ class _OrganizationDictRequired(TypedDict):
 
 
 class _OrganizationDict(_OrganizationDictRequired, total=False):
-    description: Optional[str]
-    domains: List[_DomainDict]
+    description: None | str
+    domains: list[_DomainDict]
+
+
+def _unwrap_response(resp: Any) -> Any:
+    """Normalize client responses. Some client methods return the payload
+    directly, others return a (response, body) tuple. Return the body/payload
+    in either case.
+    """
+    # Some client wrappers return (Response, body) and some return body directly
+    if isinstance(resp, tuple) and len(resp) >= 2:
+        return resp[1]
+    return resp
 
 
 def _to_organization(org: _OrganizationDict) -> Organization:
@@ -62,7 +73,7 @@ def get_organizations(self, info: strawberry.Info) -> list[Organization]:
     client = keycloak_client(request)
     try:
         organizations_raw = client.organizations.get()
-        organizations = cast(List[_OrganizationDict], organizations_raw)
+        organizations = cast(list[_OrganizationDict], organizations_raw)
     except httpx2.HTTPError as e:
         raise UpstreamServiceError("Failed to fetch organizations") from e
     return [_to_organization(cast(_OrganizationDict, org)) for org in organizations]
