@@ -72,9 +72,7 @@ def _to_organization(org: _OrganizationDict) -> Organization:
 def get_organizations(info: strawberry.Info) -> list[Organization]:
     client = keycloak_client(cast(Request, info.context["request"]))
     try:
-        organizations_raw = client.organizations.get()
-        organizations_payload = _unwrap_response(organizations_raw)
-        organizations = cast(list[_OrganizationDict], organizations_payload)
+        organizations = client.organizations.get()
     except httpx2.HTTPError as e:
         raise UpstreamServiceError("Failed to fetch organizations") from e
     return [_to_organization(cast(_OrganizationDict, org)) for org in organizations]
@@ -84,9 +82,7 @@ def get_organization(info: strawberry.Info, id: strawberry.ID) -> Organization:
     request = cast(Request, info.context["request"])
     client = keycloak_client(request)
     try:
-        organization_raw = client.organizations(id).get()
-        organization = cast(_OrganizationDict, organization_raw)
-        print("ORGANIZATION", organization)
+        organization = cast(_OrganizationDict, client.organizations(id).get())
     except httpx2.HTTPError as e:
         raise UpstreamServiceError("Failed to fetch organization") from e
     return _to_organization(organization)

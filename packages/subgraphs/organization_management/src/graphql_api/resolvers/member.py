@@ -62,6 +62,7 @@ def get_group_members(root: Group, info: strawberry.Info) -> list[Member]:
 
     try:
         members = client.groups(root.id).members.get()
+        print("GROUP MEMBERS", members)
     except httpx2.HTTPError as err:
         raise UpstreamServiceError("Failed to fetch group members") from err
     return [_to_member(cast(_MemberDict, member)) for member in members]

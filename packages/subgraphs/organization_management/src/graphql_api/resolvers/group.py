@@ -6,6 +6,7 @@ from fastapi import Request
 
 from graphql_api.errors import UpstreamServiceError
 from graphql_api.schema.group import Group
+from graphql_api.schema.member import Member
 from keycloak_client.client import keycloak_client
 
 if TYPE_CHECKING:
