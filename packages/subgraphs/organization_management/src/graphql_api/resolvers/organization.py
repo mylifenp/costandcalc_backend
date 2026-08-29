@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, TypedDict, cast, List, Optional
+from typing import Any, TypedDict, cast, Optional
 
 import httpx2
 import strawberry
@@ -68,18 +68,19 @@ def _to_organization(org: _OrganizationDict) -> Organization:
     )
 
 
-def get_organizations(self, info: strawberry.Info) -> list[Organization]:
+def get_organizations(info: strawberry.Info) -> list[Organization]:
     request = cast(Request, info.context["request"])
     client = keycloak_client(request)
     try:
         organizations_raw = client.organizations.get()
-        organizations = cast(list[_OrganizationDict], organizations_raw)
+        organizations_payload = _unwrap_response(organizations_raw)
+        organizations = cast(list[_OrganizationDict], organizations_payload)
     except httpx2.HTTPError as e:
         raise UpstreamServiceError("Failed to fetch organizations") from e
     return [_to_organization(cast(_OrganizationDict, org)) for org in organizations]
 
 
-def get_organization(self, info: strawberry.Info, id: str) -> Organization:
+def get_organization(info: strawberry.Info, id: str) -> Organization:
     request = cast(Request, info.context["request"])
     client = keycloak_client(request)
     try:
@@ -129,7 +130,8 @@ def search_organizations(
     client = keycloak_client(request)
     try:
         organizations_raw = client.organizations.search(query).get()
-        organizations = cast(List[_OrganizationDict], organizations_raw)
+        organizations_payload = _unwrap_response(organizations_raw)
+        organizations = cast(list[_OrganizationDict], organizations_payload)
     except httpx2.HTTPError as e:
         raise UpstreamServiceError("Failed to search organizations") from e
     return [_to_organization(cast(_OrganizationDict, org)) for org in organizations]
@@ -151,7 +153,8 @@ def update_organization(
     try:
         client.organizations(id).put(org_input)
         organization_raw = client.organizations(id).get()
-        organization = cast(_OrganizationDict, organization_raw)
+        organization_payload = _unwrap_response(organization_raw)
+        organization = cast(_OrganizationDict, organization_payload)
     except httpx2.HTTPError as e:
         raise UpstreamServiceError("Failed to update organization") from e
     return _to_organization(organization)
@@ -165,7 +168,8 @@ def activate_organization(
     client = keycloak_client(request)
     try:
         organization_raw = client.organizations(id).get()
-        organization = cast(_OrganizationDict, organization_raw)
+        organization_payload = _unwrap_response(organization_raw)
+        organization = cast(_OrganizationDict, organization_payload)
         organization["enabled"] = True
         client.organizations(id).put(organization)
     except httpx2.HTTPError as e:
@@ -181,7 +185,8 @@ def deactivate_organization(
     client = keycloak_client(request)
     try:
         organization_raw = client.organizations(id).get()
-        organization = cast(_OrganizationDict, organization_raw)
+        organization_payload = _unwrap_response(organization_raw)
+        organization = cast(_OrganizationDict, organization_payload)
         organization["enabled"] = False
         client.organizations(id).put(organization)
     except httpx2.HTTPError as e:
