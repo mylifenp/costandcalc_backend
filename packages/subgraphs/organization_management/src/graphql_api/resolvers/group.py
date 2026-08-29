@@ -1,27 +1,31 @@
 import httpx2
 import strawberry
+from typing import TYPE_CHECKING
 
 from graphql_api.errors import UpstreamServiceError
 from graphql_api.resolvers.member import get_group_members
 from graphql_api.schema.group import Group
-from graphql_api.schema.organization import Organization
-from graphql_api.schema.organization import Organization
 from keycloak_client.client import keycloak_client
+
+if TYPE_CHECKING:
+    from graphql_api.schema.organization import Organization
 
 
 def _to_group(group: dict) -> Group:
+    # build a plain Group; members are resolved via the Group.members
+    # resolver defined in the schema implementation (or via the
+    # get_group_members resolver) to avoid import cycles.
     return Group(
-        id = strawberry.ID(group["id"]),
-        name=group["name"],
-        description=group["description"],
-        path=group["path"],
-        parentId=group["parent_id"],
-        subGroupCount=group["sub_group_count"],
-        members = strawberry.field(resolver=get_group_members),
+        id=strawberry.ID(group["id"]),
+        name=group.get("name"),
+        description=group.get("description"),
+        path=group.get("path"),
+        parentId=group.get("parent_id"),
+        subGroupCount=group.get("sub_group_count") or 0,
     )
 
 
-def get_organization_groups(root: Organization, info: strawberry.Info) -> list[Group]:
+def get_organization_groups(root: "Organization", info: strawberry.Info) -> list[Group]:
     client = keycloak_client(info.context["request"])
 
     try:
