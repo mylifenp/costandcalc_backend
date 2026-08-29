@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import cast, Any, List, Optional, TypedDict
+from fastapi import Request
 
 import httpx2
 import strawberry
@@ -37,7 +38,7 @@ class _OrganizationDict(TypedDict, total=False):
     domains: List[_DomainDict]
 
 
-def _to_organization(org: dict) -> Organization:
+def _to_organization(org: _OrganizationDict) -> Organization:
     """Convert a Keycloak organization dict to the GraphQL Organization type."""
     return Organization(
         id=org["id"],
@@ -53,25 +54,29 @@ def _to_organization(org: dict) -> Organization:
 
 
 def get_organizations(self, info: strawberry.Info) -> list[Organization]:
-    client = keycloak_client(info.context["request"])
+    request = cast(Request, info.context["request"])
+    client = keycloak_client(request)
     try:
-        organizations = client.organizations.get()
+        organizations_raw = client.organizations.get()
+        organizations = cast(List[_OrganizationDict], organizations_raw)
     except httpx2.HTTPError as e:
         raise UpstreamServiceError("Failed to fetch organizations") from e
-    return [_to_organization(cast(dict, org)) for org in organizations]
+    return [_to_organization(cast(_OrganizationDict, org)) for org in organizations]
 
 
-def get_organization(self, info: strawberry.Info, id: strawberry.ID) -> Organization:
-    client = keycloak_client(info.context["request"])
+def get_organization(self, info: strawberry.Info, id: str) -> Organization:
+    request = cast(Request, info.context["request"])
+    client = keycloak_client(request)
     try:
-        organization = client.organizations(id).get()
+        organization_raw = client.organizations(id).get()
+        organization = cast(_OrganizationDict, organization_raw)
         print("ORGANIZATION", organization)
     except httpx2.HTTPError as e:
         raise UpstreamServiceError("Failed to fetch organization") from e
-    return _to_organization(cast(dict, organization))
+    return _to_organization(organization)
 
 
-def create_organization_group(client, organization_id: str, group_name: str) -> None:
+def create_organization_group(client: Any, organization_id: str, group_name: str) -> None:
     try:
         client.organizations(organization_id).groups.post({"name": group_name})
     except httpx2.HTTPError as e:
@@ -88,7 +93,8 @@ def create_organization(
         "enabled": input.enabled,
         "description": input.description,
     }
-    client = keycloak_client(info.context["request"])
+    request = cast(Request, info.context["request"])
+    client = keycloak_client(request)
     try:
         resp, _ = client.organizations.as_raw().post(org_input)
         location = resp.headers["Location"]
@@ -102,17 +108,19 @@ def create_organization(
 def search_organizations(
     info: strawberry.Info, query: SearchOrganizationsInput
 ) -> list[Organization]:
-    client = keycloak_client(info.context["request"])
+    request = cast(Request, info.context["request"])
+    client = keycloak_client(request)
     try:
-        organizations = client.organizations.search(query).get()
+        organizations_raw = client.organizations.search(query).get()
+        organizations = cast(List[_OrganizationDict], organizations_raw)
     except httpx2.HTTPError as e:
         raise UpstreamServiceError("Failed to search organizations") from e
-    return [_to_organization(cast(dict, org)) for org in organizations]
+    return [_to_organization(cast(_OrganizationDict, org)) for org in organizations]
 
 
 def update_organization(
     info: strawberry.Info,
-    id: strawberry.ID,
+    id: str,
     input: UpdateOrganizationInput,
 ) -> Organization:
     org_input = {
@@ -121,47 +129,54 @@ def update_organization(
         "enabled": input.enabled,
         "description": input.description,
     }
-    client = keycloak_client(info.context["request"])
+    request = cast(Request, info.context["request"])
+    client = keycloak_client(request)
     try:
         client.organizations(id).put(org_input)
+        organization_raw = client.organizations(id).get()
+        organization = cast(_OrganizationDict, organization_raw)
     except httpx2.HTTPError as e:
         raise UpstreamServiceError("Failed to update organization") from e
-    return _to_organization(cast(dict, org_input))
+    return _to_organization(organization)
 
 
 def activate_organization(
     info: strawberry.Info,
-    id: strawberry.ID,
+    id: str,
 ) -> Organization:
-    client = keycloak_client(info.context["request"])
+    request = cast(Request, info.context["request"])
+    client = keycloak_client(request)
     try:
-        organization = client.organizations(id).get()
+        organization_raw = client.organizations(id).get()
+        organization = cast(_OrganizationDict, organization_raw)
         organization["enabled"] = True
         client.organizations(id).put(organization)
     except httpx2.HTTPError as e:
         raise UpstreamServiceError("Failed to activate organization") from e
-    return _to_organization(cast(dict, organization))
+    return _to_organization(organization)
 
 
 def deactivate_organization(
-    self,
     info: strawberry.Info,
-    id: strawberry.ID,
+    id: str,
 ) -> Organization:
-    client = keycloak_client(info.context["request"])
+    request = cast(Request, info.context["request"])
+    client = keycloak_client(request)
     try:
-        organization = client.organizations(id).get()
+        organization_raw = client.organizations(id).get()
+        organization = cast(_OrganizationDict, organization_raw)
         organization["enabled"] = False
         client.organizations(id).put(organization)
     except httpx2.HTTPError as e:
         raise UpstreamServiceError("Failed to deactivate organization") from e
-    return _to_organization(cast(dict, organization))
+    return _to_organization(organization)
 
 
 def add_organization_member(
     input: AddOrganizationMemberInput, info: strawberry.Info
 ) -> AddOrganizationMemberPayload:
-    client = keycloak_client(info.context["request"])
+    request = cast(Request, info.context["request"])
+    client = keycloak_client(request)
     try:
         # client.organization_user_add(
         #     user_id=str(input.user_id),
@@ -179,7 +194,8 @@ def add_organization_member(
 def remove_organization_member(
     input: RemoveOrganizationMemberInput, info: strawberry.Info
 ) -> RemoveOrganizationMemberPayload:
-    client = keycloak_client(info.context["request"])
+    request = cast(Request, info.context["request"])
+    client = keycloak_client(request)
     try:
         client.organizations(str(input.organization_id)).members(
             str(input.user_id)
