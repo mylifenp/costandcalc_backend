@@ -6,8 +6,6 @@ import httpx2
 import strawberry
 
 from graphql_api.errors import UpstreamServiceError
-from graphql_api.schema.organization import Organization
-from graphql_api.schema.domain import Domain
 from graphql_api.schema.organization import (
     AddOrganizationInput,
     AddOrganizationMemberInput,
@@ -19,9 +17,8 @@ from graphql_api.schema.organization import (
     Status,
     UpdateOrganizationInput,
 )
-
-if TYPE_CHECKING:
-    from graphql_api.schema import Domain, Organization
+from graphql_api.schema.domain import Domain
+from graphql_api.schema.organization import Organization
 from keycloak_client.client import keycloak_client
 
 
@@ -58,6 +55,12 @@ def get_organization(self, info: strawberry.Info, id: strawberry.ID) -> Organiza
     except httpx2.HTTPError as e:
         raise UpstreamServiceError("Failed to fetch organization") from e
     return _to_organization(cast(dict, organization))
+
+def create_organization_group(client, organization_id: str, group_name: str) -> None:
+    try:
+        client.organizations(organization_id).groups.post({"name": group_name})
+    except httpx2.HTTPError as e:
+        raise UpstreamServiceError("Failed to create organization group") from e
 
 
 def create_organization(
