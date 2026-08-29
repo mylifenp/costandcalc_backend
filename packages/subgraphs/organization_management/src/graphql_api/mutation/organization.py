@@ -1,28 +1,38 @@
 import strawberry
 
-from graphql_api.resolvers.organization import create_organization
-from graphql_api.schema.organization import Organization
+from graphql_api.resolvers.organization import (
+    activate_organization,
+    add_organization_member,
+    create_organization,
+    deactivate_organization,
+    remove_organization_member,
+    update_organization,
+)
+from graphql_api.schema.organization import (
+    AddOrganizationMemberPayload,
+    Organization,
+    OrganizationCreateConfirmation,
+    RemoveOrganizationMemberPayload,
+)
 
 
 @strawberry.type
 class OrganizationMutation:
-    create_organization: Organization = strawberry.field(resolver=create_organization)
-    # @strawberry.mutation
-    # def create_organization(
-    #     self,
-    #     info: strawberry.Info,
-    #     input: AddOrganizationInput,
-    # ) -> Organization:
-    #     client = keycloak_client(info.context["request"])
-    #     try:
-    #         organization = client.realms(input.realm).organizations.post()
-    #     except Exception as e:
-    #         raise e
-    #     return Organization(
-    #         id=organization.id,
-    #         name=organization.name,
-    #         alias=organization.alias,
-    #         enabled=organization.enabled,
-    #         description=organization.description,
-    #         domains=organization.domains,
-    #     )
+    create_organization: OrganizationCreateConfirmation = strawberry.mutation(
+        resolver=create_organization
+    )
+    update_organization: Organization = strawberry.mutation(
+        resolver=update_organization
+    )
+    activate_organization: Organization = strawberry.mutation(
+        resolver=activate_organization
+    )
+    deactivate_organization: Organization = strawberry.mutation(
+        resolver=deactivate_organization
+    )
+    add_organization_member: AddOrganizationMemberPayload = strawberry.mutation(
+        resolver=add_organization_member
+    )
+    remove_organization_member: RemoveOrganizationMemberPayload = strawberry.mutation(
+        resolver=remove_organization_member
+    )

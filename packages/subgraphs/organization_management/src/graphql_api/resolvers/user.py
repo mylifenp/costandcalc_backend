@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import cast
 
 import httpx2
+from requests.api import request
 import strawberry
 from fastapi import Request
 
@@ -20,12 +21,17 @@ def _to_user(user: dict) -> User:
     )
 
 
-def get_user(id: strawberry.ID) -> User:
-    return User(
-        id=id,
-        username="Patrick",
-        email="patric@test.com",
-    )
+def get_user(id: strawberry.ID, info: strawberry.Info) -> User:
+    request: Request = info.context["request"]
+
+    access_token = request.headers.get("Access-Token")
+    if access_token is None:
+        raise Exception("Access-Token header is missing")
+    keycloak_client = connect_keycloak_client(access_token)
+
+
+    user = keycloak_client.get_user(id)
+    return _to_user(user)
 
 def get_users(self, info: strawberry.Info) -> list[User]:
     request: Request = info.context["request"]

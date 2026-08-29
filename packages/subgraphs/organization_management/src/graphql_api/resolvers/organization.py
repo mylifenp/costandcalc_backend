@@ -6,11 +6,18 @@ import httpx2
 import strawberry
 
 from graphql_api.errors import UpstreamServiceError
+from graphql_api.schema.organization import Organization
+from graphql_api.schema.domain import Domain
 from graphql_api.schema.organization import (
     AddOrganizationInput,
+    AddOrganizationMemberInput,
+    AddOrganizationMemberPayload,
     OrganizationCreateConfirmation,
+    RemoveOrganizationMemberInput,
+    RemoveOrganizationMemberPayload,
     SearchOrganizationsInput,
     Status,
+    UpdateOrganizationInput,
 )
 
 if TYPE_CHECKING:
@@ -54,7 +61,6 @@ def get_organization(self, info: strawberry.Info, id: strawberry.ID) -> Organiza
 
 
 def create_organization(
-    self,
     info: strawberry.Info,
     input: AddOrganizationInput,
 ) -> OrganizationCreateConfirmation:
@@ -66,14 +72,16 @@ def create_organization(
     }
     client = keycloak_client(info.context["request"])
     try:
-        client.organizations.post(org_input)
+        resp, _ = client.organizations.as_raw().post(org_input)
+        location = resp.headers["Location"]
+        organization_id = location.split("/")[-1]
+        print("ORGANIZATION_ID", organization_id)
     except httpx2.HTTPError as e:
         raise UpstreamServiceError("Failed to create organization") from e
     return OrganizationCreateConfirmation(name=input.name, success=Status.SUCCESS)
 
 
 def search_organizations(
-    self,
     info: strawberry.Info,
     query: SearchOrganizationsInput
 ) -> list[Organization]:
@@ -83,3 +91,78 @@ def search_organizations(
     except httpx2.HTTPError as e:
         raise UpstreamServiceError("Failed to search organizations") from e
     return [_to_organization(cast(dict, org)) for org in organizations]
+
+
+def update_organization(
+    info: strawberry.Info,
+    id: strawberry.ID,
+    input: UpdateOrganizationInput,
+) -> Organization:
+    org_input = {
+        "name": input.name,
+        "alias": input.alias,
+        "enabled": input.enabled,
+        "description": input.description,
+    }
+    client = keycloak_client(info.context["request"])
+    try:
+        client.organizations(id).put(org_input)
+    except httpx2.HTTPError as e:
+        raise UpstreamServiceError("Failed to update organization") from e
+    return _to_organization(cast(dict, org_input))
+
+def activate_organization(
+    info: strawberry.Info,
+    id: strawberry.ID,
+) -> Organization:
+    client = keycloak_client(info.context["request"])
+    try:
+        organization = client.organizations(id).get()
+        organization["enabled"] = True
+        client.organizations(id).put(organization)
+    except httpx2.HTTPError as e:
+        raise UpstreamServiceError("Failed to activate organization") from e
+    return _to_organization(cast(dict, organization))
+
+
+def deactivate_organization(
+    self,
+    info: strawberry.Info,
+    id: strawberry.ID,
+) -> Organization:
+    client = keycloak_client(info.context["request"])
+    try:
+        organization = client.organizations(id).get()
+        organization["enabled"] = False
+        client.organizations(id).put(organization)
+    except httpx2.HTTPError as e:
+        raise UpstreamServiceError("Failed to deactivate organization") from e
+    return _to_organization(cast(dict, organization))
+
+
+def add_organization_member(
+    input: AddOrganizationMemberInput, info: strawberry.Info
+) -> AddOrganizationMemberPayload:
+    client = keycloak_client(info.context["request"])
+    try:
+        # client.organization_user_add(
+        #     user_id=str(input.user_id),
+        #     organization_id=str(input.organization_id),
+        # )
+        client.organizations(str(input.organization_id)).members.post(str(input.user_id))
+    except Exception as err:
+        raise UpstreamServiceError("Failed to add user to organization") from err
+
+    return AddOrganizationMemberPayload(success=True)
+
+
+def remove_organization_member(
+    input: RemoveOrganizationMemberInput, info: strawberry.Info
+) -> RemoveOrganizationMemberPayload:
+    client = keycloak_client(info.context["request"])
+    try:
+        client.organizations(str(input.organization_id)).members(str(input.user_id)).delete()
+    except Exception as err:
+        raise UpstreamServiceError("Failed to remove user from organization") from err
+
+    return RemoveOrganizationMemberPayload(success=True)

@@ -36,6 +36,15 @@ class AddOrganizationInput:
     enabled: bool
     description: str | None = None
 
+
+@strawberry.input
+class UpdateOrganizationInput:
+    name: str | None = None
+    alias: str | None = None
+    enabled: bool | None = None
+    description: str | None = None
+
+
 @strawberry.input
 class SearchOrganizationsInput:
     briefRepresentation: bool | None = None
@@ -44,3 +53,25 @@ class SearchOrganizationsInput:
     max: int | None = None
     q: str | None = None
     search: str | None = None
+
+
+@strawberry.input
+class AddOrganizationMemberInput:
+    organization_id: strawberry.ID
+    user_id: strawberry.ID
+
+
+@strawberry.type
+class AddOrganizationMemberPayload:
+    success: bool
+
+
+@strawberry.input
+class RemoveOrganizationMemberInput:
+    organization_id: strawberry.ID
+    user_id: strawberry.ID
+
+
+@strawberry.type
+class RemoveOrganizationMemberPayload:
+    success: bool

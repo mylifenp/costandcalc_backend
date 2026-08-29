@@ -1,12 +1,12 @@
 
 import strawberry
 
+from graphql_api.schema import Member
+
 
 @strawberry.federation.type(keys=["id"])
-class User:
-    id: strawberry.ID
-    username: str
-    email: str
+class User(Member):
+    pass
 
 
 @strawberry.input
