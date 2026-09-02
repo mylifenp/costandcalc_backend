@@ -1,14 +1,23 @@
+
 import strawberry
+
+from graphql_api.schema.member import Member
 
 
 @strawberry.federation.type(keys=["id"])
-class User:
-    id: strawberry.ID
-    name: str
-    email: str
+class User(Member):
+    pass
+
+
+@strawberry.input
+class Credential:
+    type: str
+    value: str
 
 
 @strawberry.input
 class AddUserInput:
-    name: str
+    username: str
     email: str
+    enabled: bool
+    credentials: list[Credential]
