@@ -38,7 +38,7 @@ COPY . .
 RUN --mount=type=cache,target=/opt/cargo/registry \
     --mount=type=cache,target=/opt/cargo/git \
     --mount=type=cache,target=/workspace/target \
-    ./node_modules/.bin/nx run subgraphs_media:build:production
+    ./node_modules/.bin/nx run subgraphs_admin:build:production
 
 ########################################################
 # Runtime
@@ -49,7 +49,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-    curl \
     ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
@@ -66,14 +65,14 @@ RUN groupadd --system app \
 WORKDIR /app
 
 COPY --from=builder \
-    /workspace/dist/target/subgraphs_media/release/subgraphs_media \
-    /app/subgraphs_media
+    /workspace/dist/target/subgraphs_admin/release/subgraphs_admin \
+    /app/subgraphs_admin
 
-    RUN chown app:app /app/subgraphs_media \
-    && chmod 755 /app/subgraphs_media
+RUN chown app:app /app/subgraphs_admin \
+ && chmod 755 /app/subgraphs_admin
 
 USER app
 
 EXPOSE 8001
 
-ENTRYPOINT ["/app/subgraphs_media"]
+ENTRYPOINT ["/app/subgraphs_admin"]
