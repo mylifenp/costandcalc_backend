@@ -49,9 +49,12 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
+    curl \
     ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
+
+RUN apk add --no-cache curl
 # Create an unprivileged user
 RUN groupadd --system app \
  && useradd --system \

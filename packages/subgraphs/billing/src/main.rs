@@ -15,6 +15,10 @@ use crate::{
     utils::{graphql_handler, graphql_ws_handler},
 };
 
+async fn health() -> &'static str {
+    "OK"
+}
+
 #[tokio::main]
 async fn main() {
     #[cfg(debug_assertions)]
@@ -31,6 +35,7 @@ async fn main() {
     let schema: AppSchema = build_schema().await;
 
     let app = Router::new()
+        .route("/health", get(health))
         .route("/graphql", get(graphiql_handler).post(graphql_handler))
         .route("/subscriptions", get(graphql_ws_handler))
         .layer(cors)
