@@ -41,7 +41,8 @@ RUN groupadd --system app \
 WORKDIR /app
 COPY --from=builder --chown=app:app /app /app
 
-ENV PATH="/app/.venv/bin:$PATH"
+ENV PATH="/app/.venv/bin:$PATH" \
+    PYTHONPATH="/app/src"
 
 USER app
 EXPOSE 8000

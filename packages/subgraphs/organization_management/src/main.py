@@ -11,7 +11,7 @@ from schema import schema
 load_dotenv()
 
 port_str = os.getenv("ORGANIZATION_MANAGEMENT_PORT")
-PORT = int(port_str) if port_str else 8009
+PORT = int(port_str) if port_str else 8001
 HOST = os.getenv("BACKEND_HOST", "0.0.0.0")
 
 graphql_app = GraphQLRouter(schema)
