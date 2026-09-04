@@ -66,7 +66,7 @@ COPY --from=builder \
     /workspace/dist/target/subgraphs_work/release/subgraphs_work \
     /app/subgraphs_work
 
-    RUN chown app:app /app/subgraphs_work \
+RUN chown app:app /app/subgraphs_work \
     && chmod 755 /app/subgraphs_work
 
 USER app
