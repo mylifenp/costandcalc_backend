@@ -13,6 +13,8 @@ permissions:
 env:
   DOCKERHUB_NAMESPACE: mylifenp
 
+  DOCKER_IMAGE_QDRANT: mylifenp/qdrant
+
   DOCKER_IMAGE_SUBGRAPHS_ADMIN: mylifenp/subgraphs_admin
   DOCKER_IMAGE_SUBGRAPHS_ASSETS: mylifenp/subgraphs_assets
   DOCKER_IMAGE_SUBGRAPHS_BILLING: mylifenp/subgraphs_billing
@@ -22,6 +24,9 @@ env:
   DOCKER_IMAGE_SUBGRAPHS_NOTIFICATION: mylifenp/subgraphs_notification
   DOCKER_IMAGE_SUBGRAPHS_WORK: mylifenp/subgraphs_work
   DOCKER_IMAGE_SUBGRAPHS_ORGANIZATION_MANAGEMENT: mylifenp/subgraphs_organization_management
+
+
+  DOCKER_REPOSITORY_QDRANT: qdrant
 
   DOCKER_REPOSITORY_SUBGRAPHS_ADMIN: subgraphs_admin
   DOCKER_REPOSITORY_SUBGRAPHS_ASSETS: subgraphs_assets
@@ -922,9 +927,44 @@ jobs:
               "https://hub.docker.com/v2/namespaces/${DOCKERHUB_NAMESPACE}/repositories/${DOCKERHUB_REPOSITORY}/tags/${tag}/"
           done <<< "${tags_to_delete}"
 
+  build-qdrant:
+    runs-on: ubuntu-latest
+    needs: main
+
+    if: |
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Qdrant image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: dockers/qdrant_config/Dockerfile
+          push: true
+          tags: |
+            ${{ env.DOCKER_IMAGE_QDRANT }}:1.19.0
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   deploy-on-vps:
     needs:
       - main
+      - build-qdrant
       - build-subgraphs-admin
       - build-subgraphs-assets
       - build-subgraphs-billing
@@ -940,6 +980,7 @@ jobs:
         github.event_name == 'push' &&
         github.ref == 'refs/heads/main' &&
         needs.main.result == 'success' &&
+        contains(fromJSON('["success","skipped"]'), needs.build-qdrant.result) &&
         contains(fromJSON('["success","skipped"]'), needs.build-subgraphs-admin.result) &&
         contains(fromJSON('["success","skipped"]'), needs.build-subgraphs-assets.result) &&
         contains(fromJSON('["success","skipped"]'), needs.build-subgraphs-billing.result) &&
@@ -960,6 +1001,15 @@ jobs:
           sshpass -p "${{ secrets.PASSPHRASE }}" scp -o StrictHostKeyChecking=no dockers/docker-compose.yml "${{ secrets.VPS_USER }}"@"${{ secrets.VPS_HOST }}":~/costandcalc_backend/
           sshpass -p "${{ secrets.PASSPHRASE }}" scp -o StrictHostKeyChecking=no router-config.yml "${{ secrets.VPS_USER }}"@"${{ secrets.VPS_HOST }}":~/costandcalc_backend/
           sshpass -p "${{ secrets.PASSPHRASE }}" scp -o StrictHostKeyChecking=no graph.production.yml "${{ secrets.VPS_USER }}"@"${{ secrets.VPS_HOST }}":~/costandcalc_backend/
+          sshpass -p "${{ secrets.PASSPHRASE }}" \
+            ssh -o StrictHostKeyChecking=no \
+            "${{ secrets.VPS_USER }}"@"${{ secrets.VPS_HOST }}" \
+            "mkdir -p ~/costandcalc_backend/qdrant_config"
+
+          sshpass -p "${{ secrets.PASSPHRASE }}" \
+            scp -o StrictHostKeyChecking=no \
+            dockers/qdrant_config/production.yaml \
+            "${{ secrets.VPS_USER }}"@"${{ secrets.VPS_HOST }}":~/costandcalc_backend/qdrant_config/
 
       - name: Deploy to VPS
         uses: appleboy/ssh-action@master
@@ -971,4 +1021,4 @@ jobs:
           script: |
             cd ~/costandcalc_backend
             docker compose pull
-            docker compose up -d
+            docker compose up -d --remove-orphans
