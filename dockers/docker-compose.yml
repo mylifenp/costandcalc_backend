@@ -310,22 +310,24 @@ services:
       - ./.env
 
   mongodb:
-    image: 'mongo:latest'
+    image: 'mongo:8-noble'
     restart: 'always'
-    container_name: 'costandcalc_mongodb'
+    container_name: 'mongodb'
+    stop_grace_period: 30s
+    command: ['mongod', '--config', '/etc/mongod.conf']
     env_file:
       - ./.docker/database/.env
     volumes:
       - ./.docker/database/mongod.conf:/etc/mongod.conf
       - ./.docker/database/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
-      - ./.docker/database/data/db:/data/db/
-      - ./.docker/database/data/log/:/var/log/database/
+      - mongodb-data:/data/db
+      - ./.docker/database/data/log/:/var/log/mongodb/
     ports:
       - '27017:27017'
 
   redis:
     image: 'redis/redis-stack:latest'
-    container_name: 'costandcalc_redis'
+    container_name: 'redis'
     restart: 'always'
     ports:
       - '6379:6379'
@@ -336,8 +338,8 @@ services:
       - ./.docker/redis/.env
 
   redis-ps:
-    image: 'redis:latest'
-    container_name: 'costandcalc_redis_ps'
+    image: 'redis:8.2.3'
+    container_name: 'redis-ps'
     restart: 'always'
     ports:
       - '6378:6379'
@@ -351,17 +353,17 @@ services:
       - /usr/local/etc/redis/redis.conf
 
   minio:
-    image: quay.io/minio/minio:latest
+    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
     container_name: 'minio'
     restart: 'always'
     ports:
-      - '9010:9000'
-      - '9020:9001'
+      - '9000:9000'
+      - '9001:9001'
     volumes:
       - ./.docker/minio/minio-data:/data
     env_file:
       - ./.docker/minio/.env
-    command: ['server', '--console-address', ':9001', '/data']
+    command: ['server', '--console-address', ':9001', '/minio-data']
 
   minio-buckets:
     image: quay.io/minio/mc:latest
@@ -377,14 +379,54 @@ services:
       exit 0;
       "
 
+  qdrant:
+    image: qdrant/qdrant:v1.19.0   # pin the version, don't use :latest
+    container_name: qdrant
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6333:6333"   # REST
+      - "127.0.0.1:6334:6334"   # gRPC
+    volumes:
+      - qdrant-storage:/qdrant/storage:z
+      - ./qdrant_config/production.yaml:/qdrant/config/production.yaml:ro
+    environment:
+      - QDRANT__SERVICE__API_KEY=${QDRANT_API_KEY}
+      - QDRANT__SERVICE__ENABLE_TLS=false   # set true if terminating TLS at Qdrant itself
+      - QDRANT__LOG_LEVEL=INFO
+    deploy:
+      resources:
+        limits:
+          cpus: "4"
+          memory: 8G
+        reservations:
+          cpus: "2"
+          memory: 4G
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:6333/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+
 volumes:
-  mongodb:
+  mongodb-data:
     driver: local
   redis-data:
     driver: local
   minio-data:
     driver: local
   router-data:
+    driver: local
+  qdrant-storage:
     driver: local
 
 networks:

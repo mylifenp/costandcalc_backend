@@ -204,7 +204,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: dockers/subgraphs_admin.Dockerfile
+          file: packages/subgraphs/admin/Dockerfile
           push: true
           tags: |
             ${{ env.DOCKER_IMAGE_SUBGRAPHS_ADMIN }}:latest
@@ -288,7 +288,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: dockers/subgraphs_assets.Dockerfile
+          file: packages/subgraphs/assets/Dockerfile
           push: true
           tags: |
             ${{ env.DOCKER_IMAGE_SUBGRAPHS_ASSETS }}:latest
@@ -372,7 +372,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: dockers/subgraphs_billing.Dockerfile
+          file: packages/subgraphs/billing/Dockerfile
           push: true
           tags: |
             ${{ env.DOCKER_IMAGE_SUBGRAPHS_BILLING }}:latest
@@ -456,7 +456,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: dockers/subgraphs_estimation.Dockerfile
+          file: packages/subgraphs/estimation/Dockerfile
           push: true
           tags: |
             ${{ env.DOCKER_IMAGE_SUBGRAPHS_ESTIMATION }}:latest
@@ -540,7 +540,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: dockers/subgraphs_identity.Dockerfile
+          file: packages/subgraphs/identity/Dockerfile
           push: true
           tags: |
             ${{ env.DOCKER_IMAGE_SUBGRAPHS_IDENTITY }}:latest
@@ -624,7 +624,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: dockers/subgraphs_media.Dockerfile
+          file: packages/subgraphs/media/Dockerfile
           push: true
           tags: |
             ${{ env.DOCKER_IMAGE_SUBGRAPHS_MEDIA }}:latest
@@ -708,7 +708,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: dockers/subgraphs_notification.Dockerfile
+          file: packages/subgraphs/notification/Dockerfile
           push: true
           tags: |
             ${{ env.DOCKER_IMAGE_SUBGRAPHS_NOTIFICATION }}:latest
@@ -791,7 +791,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: dockers/subgraphs_organization_management.Dockerfile
+          file: packages/subgraphs/organization_management/Dockerfile
           push: true
           tags: |
             ${{ env.DOCKER_IMAGE_SUBGRAPHS_ORGANIZATION_MANAGEMENT }}:latest
@@ -875,7 +875,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: dockers/subgraphs_work.Dockerfile
+          file: packages/subgraphs/work/Dockerfile
           push: true
           tags: |
             ${{ env.DOCKER_IMAGE_SUBGRAPHS_WORK }}:latest
