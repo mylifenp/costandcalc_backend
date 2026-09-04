@@ -48,7 +48,7 @@ FROM debian:bookworm-slim
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends \
+ && apt-get install -y --no-install-recommends curl \
     ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
@@ -67,7 +67,7 @@ COPY --from=builder \
     /app/subgraphs_work
 
 RUN chown app:app /app/subgraphs_work \
-    && chmod 755 /app/subgraphs_work
+ && chmod 755 /app/subgraphs_work
 
 USER app
 
