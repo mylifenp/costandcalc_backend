@@ -1,0 +1,10 @@
+storage:
+  # snapshots let you back up collections without stopping the service
+  storage_path: /qdrant/storage
+  snapshots_path: /qdrant/storage/snapshots
+  on_disk_payload: true   # keeps payload on disk instead of RAM — important at scale
+
+service:
+  max_request_size_mb: 64
+
+telemetry_disabled: true
