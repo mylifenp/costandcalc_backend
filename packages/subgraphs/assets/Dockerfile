@@ -54,7 +54,7 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 
-RUN apk add --no-cache curl
+
 # Create an unprivileged user
 RUN groupadd --system app \
  && useradd --system \
