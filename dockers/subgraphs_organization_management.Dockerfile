@@ -28,6 +28,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 ########################################################
 FROM python:3.14-slim-bookworm
 
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN groupadd --system app \
  && useradd --system \
     --gid app \
@@ -43,4 +46,4 @@ ENV PATH="/app/.venv/bin:$PATH"
 USER app
 EXPOSE 8000
 
-ENTRYPOINT ["python", "src/main.py"]
+ENTRYPOINT ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

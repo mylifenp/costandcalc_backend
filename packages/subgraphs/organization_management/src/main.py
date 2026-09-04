@@ -18,9 +18,10 @@ graphql_app = GraphQLRouter(schema)
 
 app = FastAPI()
 
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
 
-
-app = FastAPI()
 
 @app.middleware("http")
 async def timeout_middleware(request: Request, call_next):
@@ -49,5 +50,5 @@ if __name__ == "__main__":
         "main:app",
         host=HOST,
         port=PORT,
-        reload=True,
+        reload=os.getenv("ENV") == "development",
     )
