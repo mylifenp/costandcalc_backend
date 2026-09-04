@@ -357,8 +357,8 @@ services:
     container_name: 'minio'
     restart: 'always'
     ports:
-      - '9000:9000'
-      - '9001:9001'
+      - '9010:9000'
+      - '9011:9001'
     volumes:
       - ./.docker/minio/minio-data:/data
     env_file:
