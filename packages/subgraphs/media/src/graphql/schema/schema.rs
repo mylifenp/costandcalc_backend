@@ -1,10 +1,12 @@
-use async_graphql::{EmptyMutation, EmptySubscription, Schema};
+use async_graphql::{EmptySubscription, Schema};
 // use dotenvy::dotenv;
 use shared::keycloak::client::KeycloakClient;
 
+use crate::graphql::mutation::Mutation;
 use crate::graphql::query::Query;
+use crate::utils::uploader::init_file_uploader;
 
-pub type AppSchema = Schema<Query, EmptyMutation, EmptySubscription>;
+pub type AppSchema = Schema<Query, Mutation, EmptySubscription>;
 
 pub async fn build_schema() -> AppSchema {
     // dotenv().ok();
@@ -24,7 +26,7 @@ pub async fn build_schema() -> AppSchema {
 
     // let emailer = init_emailer();
     let keycloak_client = KeycloakClient::new().expect("Failed to create Keycloak client");
-    // let file_uploader = init_file_uploader();
+    let file_uploader = init_file_uploader().await;
 
     // let repositories = Arc::new(
     //     repositories::init_repos()
@@ -32,17 +34,13 @@ pub async fn build_schema() -> AppSchema {
     //         .expect("MongoDB init failed"),
     // );
 
-    let schema = Schema::build(
-        Query::default(),
-        EmptyMutation,
-        EmptySubscription,
-    );
+    let schema = Schema::build(Query::default(), Mutation::default(), EmptySubscription);
 
     schema
         // .data(cache)
         // .data(repositories)
         // .data(redis_pubsub)
-        // .data(file_uploader)
+        .data(file_uploader)
         // .data(emailer)
         .data(keycloak_client)
         // .extension(UserExtension)

@@ -5,11 +5,16 @@ edition = "2024"
 
 
 [dependencies]
+futures-util = "0.3"
 dotenvy = "0.15.7"
+minio = "0.4.0"
+nanoid = "0.5"
 async-graphql-axum = "7"
 chrono = { version = "0.4", features = ["serde"] }
 tower-http = {version="0.7", features = ["cors"]}
-serde = "1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0.140"
+image = { version = "0.25.10", features = ["webp"] }
 futures = "0.3"
 slab = "0.4"
 async-trait = "0.1"
